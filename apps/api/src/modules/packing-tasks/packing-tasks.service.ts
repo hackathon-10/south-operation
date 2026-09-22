@@ -72,6 +72,7 @@ export class PackingTasksService {
       this.prisma.packingTask.findMany({
         where,
         include: taskSummaryInclude,
+        relationLoadStrategy: 'join',
         orderBy: [{ status: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
         ...toSkipTake(query),
       }),
@@ -398,6 +399,7 @@ export class PackingTasksService {
     const task = await this.prisma.packingTask.findUnique({
       where: { id: taskId },
       include: taskDetailInclude,
+      relationLoadStrategy: 'join',
     });
     if (!task) throw new AppException('TASK_NOT_FOUND');
     return task;

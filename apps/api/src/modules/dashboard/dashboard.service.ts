@@ -4,7 +4,6 @@ import {
   BaseProgressDto,
   CommanderDashboardDto,
   JoinRequestStatus,
-  MISSION_STATUS_LABEL,
   MissionStatus,
   PACKAGE_STATUSES,
   PACKAGE_STATUS_LABEL,
@@ -51,18 +50,21 @@ export class DashboardService {
             priority: { in: [TaskPriority.HIGH, TaskPriority.URGENT] },
           },
           include: taskSummaryInclude,
+          relationLoadStrategy: 'join',
           orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
           take: 5,
         }),
         this.prisma.missionJoinRequest.findMany({
           where: { status: JoinRequestStatus.PENDING },
           include: joinRequestInclude,
+          relationLoadStrategy: 'join',
           orderBy: { createdAt: 'asc' },
           take: 10,
         }),
         this.prisma.transportMission.findFirst({
           where: { status: { in: [MissionStatus.PLANNED, MissionStatus.LOADING] } },
           include: missionSummaryInclude,
+          relationLoadStrategy: 'join',
           orderBy: { plannedDepartureAt: 'asc' },
         }),
       ]);
@@ -135,6 +137,7 @@ export class DashboardService {
             status: { in: [PackingTaskStatus.ASSIGNED, PackingTaskStatus.IN_PROGRESS] },
           },
           include: taskSummaryInclude,
+          relationLoadStrategy: 'join',
           orderBy: [{ priority: 'desc' }, { dueAt: 'asc' }, { createdAt: 'asc' }],
         }),
         this.prisma.packingTask.count({
@@ -147,6 +150,7 @@ export class DashboardService {
         this.prisma.package.findMany({
           where: { task: { assignedSoldierId: user.id }, status: PackageStatus.OPEN },
           include: packageSummaryInclude,
+          relationLoadStrategy: 'join',
           orderBy: { createdAt: 'desc' },
           take: 10,
         }),
@@ -169,6 +173,7 @@ export class DashboardService {
             },
           },
           include: missionSummaryInclude,
+          relationLoadStrategy: 'join',
           orderBy: { plannedDepartureAt: 'asc' },
         }),
         user.baseId
@@ -179,6 +184,7 @@ export class DashboardService {
                 plannedDepartureAt: { gte: new Date() },
               },
               include: missionSummaryInclude,
+              relationLoadStrategy: 'join',
               orderBy: { plannedDepartureAt: 'asc' },
               take: 5,
             })
@@ -186,6 +192,7 @@ export class DashboardService {
         this.prisma.missionJoinRequest.findMany({
           where: { requestingUserId: user.id, status: JoinRequestStatus.PENDING },
           include: joinRequestInclude,
+          relationLoadStrategy: 'join',
           orderBy: { createdAt: 'desc' },
           take: 5,
         }),
@@ -216,6 +223,7 @@ export class DashboardService {
       this.prisma.package.findMany({
         where: { teamId: { in: teamIds } },
         include: packageSummaryInclude,
+        relationLoadStrategy: 'join',
         orderBy: { updatedAt: 'desc' },
         take: 12,
       }),

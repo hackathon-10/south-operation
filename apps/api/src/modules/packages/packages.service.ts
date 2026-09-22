@@ -120,6 +120,7 @@ export class PackagesService {
       this.prisma.package.findMany({
         where,
         include: packageSummaryInclude,
+        relationLoadStrategy: 'join',
         orderBy: [{ createdAt: 'desc' }],
         ...toSkipTake(query),
       }),
@@ -141,6 +142,7 @@ export class PackagesService {
     const row = await this.prisma.package.findUnique({
       where: { publicToken },
       include: packageDetailInclude,
+      relationLoadStrategy: 'join',
     });
     if (!row) throw new AppException('PACKAGE_TOKEN_NOT_FOUND');
 
@@ -879,6 +881,7 @@ export class PackagesService {
     const row = await this.prisma.package.findUnique({
       where: { id: packageId },
       include: packageDetailInclude,
+      relationLoadStrategy: 'join',
     });
     if (!row) throw new AppException('PACKAGE_NOT_FOUND');
     return row;

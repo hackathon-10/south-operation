@@ -87,6 +87,7 @@ export class MissionsService {
       this.prisma.transportMission.findMany({
         where,
         include: missionSummaryInclude,
+        relationLoadStrategy: 'join',
         orderBy: [{ plannedDepartureAt: 'asc' }],
         ...toSkipTake(query),
       }),
@@ -446,6 +447,7 @@ export class MissionsService {
     const mission = await this.prisma.transportMission.findUnique({
       where: { id: missionId },
       include: missionDetailInclude,
+      relationLoadStrategy: 'join',
     });
     if (!mission) throw new AppException('MISSION_NOT_FOUND');
     return mission;

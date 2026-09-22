@@ -9,7 +9,9 @@ generator client {
   provider = "prisma-client-js"
   // driverAdapters מאפשר להריץ את בדיקות האינטגרציה מול Postgres בתוך התהליך (PGlite),
   // בלי להפעיל שרת מסד חיצוני. בפרודקשן נעשה שימוש בחיבור הרגיל ל-Supabase.
-  previewFeatures = ["driverAdapters"]
+  // relationJoins מאפשר relationLoadStrategy: 'join' - שאילתה אחת עם JOIN אמיתי
+  // במקום שאילתת-בסיס + שאילתה נפרדת לכל relation שמוטמע (חשוב כשה-DB רחוק ברשת).
+  previewFeatures = ["driverAdapters", "relationJoins"]
 }
 
 datasource db {

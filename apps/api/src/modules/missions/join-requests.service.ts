@@ -58,6 +58,7 @@ export class JoinRequestsService {
       this.prisma.missionJoinRequest.findMany({
         where,
         include: joinRequestInclude,
+        relationLoadStrategy: 'join',
         orderBy: { createdAt: 'desc' },
         ...toSkipTake(query),
       }),
@@ -217,6 +218,7 @@ export class JoinRequestsService {
     const request = await this.prisma.missionJoinRequest.findUnique({
       where: { id: requestId },
       include: joinRequestInclude,
+      relationLoadStrategy: 'join',
     });
     if (!request) throw new AppException('JOIN_REQUEST_NOT_FOUND');
     return request;
