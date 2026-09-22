@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import { palette } from '../../theme/tokens';
 
 function greetingForNow(): string {
@@ -52,7 +53,19 @@ export function GreetingHero({
             background: 'rgba(255,255,255,.06)',
           }}
         />
-        <Typography sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.2 }}>
+        <LocalShippingRoundedIcon
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            insetInlineEnd: 18,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            fontSize: 96,
+            opacity: 0.08,
+            display: { xs: 'none', sm: 'block' },
+          }}
+        />
+        <Typography component="h1" sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.2 }}>
           {greetingForNow()}, {firstName}
         </Typography>
         <Typography sx={{ fontSize: 14, opacity: 0.85, mt: 0.5 }}>{subtitle}</Typography>

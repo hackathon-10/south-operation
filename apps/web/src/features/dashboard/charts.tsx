@@ -88,11 +88,11 @@ export function HorizontalBarChart({
           <YAxis
             type="category"
             dataKey="label"
-            width={128}
+            width={148}
             axisLine={false}
             tickLine={false}
             orientation="right"
-            tick={{ fontSize: 12.5, fill: palette.textSecondary, textAnchor: 'start' }}
+            tick={{ fontSize: 12.5, fill: palette.textSecondary, textAnchor: 'end' }}
           />
           <Tooltip
             cursor={{ fill: palette.surfaceMuted }}

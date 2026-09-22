@@ -12,6 +12,11 @@ import {
   Typography,
 } from '@mui/material';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
+import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
+import AltRouteRoundedIcon from '@mui/icons-material/AltRouteRounded';
+import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -82,41 +87,91 @@ export function LoginPage() {
           justifyContent: 'center',
           gap: 3,
           px: 8,
+          position: 'relative',
+          overflow: 'hidden',
           background: `linear-gradient(160deg, ${palette.navy900} 0%, ${palette.navy700} 100%)`,
           color: palette.textInverse,
         }}
       >
-        <Typography sx={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15 }}>
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            width: 520,
+            height: 520,
+            borderRadius: '50%',
+            top: -220,
+            insetInlineEnd: -180,
+            background: `radial-gradient(circle, ${palette.primary}33 0%, transparent 70%)`,
+          }}
+        />
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            width: 420,
+            height: 420,
+            borderRadius: '50%',
+            bottom: -200,
+            insetInlineStart: -160,
+            background: `radial-gradient(circle, ${palette.violet}26 0%, transparent 70%)`,
+          }}
+        />
+
+        <Stack direction="row" alignItems="center" gap={1.5} sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: radii.control,
+              display: 'grid',
+              placeItems: 'center',
+              backgroundColor: 'rgba(255,255,255,.1)',
+              border: '1px solid rgba(255,255,255,.16)',
+            }}
+          >
+            <ShieldRoundedIcon sx={{ fontSize: 24 }} />
+          </Box>
+          <Typography sx={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.5, opacity: 0.75 }}>
+            מערכת לוגיסטיקה מבצעית
+          </Typography>
+        </Stack>
+
+        <Typography sx={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15, position: 'relative' }}>
           המעבר דרומה
         </Typography>
-        <Typography sx={{ fontSize: 17, opacity: 0.85, maxWidth: 440 }}>
+        <Typography sx={{ fontSize: 17, opacity: 0.85, maxWidth: 440, position: 'relative' }}>
           מקבלים משימה, אורזים, סוגרים אריזה עם QR — ובקריית התקשוב סורקים ויודעים בדיוק
           לאיזה חדר להביא. תמונת מצב מלאה למפקד, בזמן אמת.
         </Typography>
 
-        <Stack gap={1.5} sx={{ mt: 2 }}>
+        <Stack gap={1.75} sx={{ mt: 2, position: 'relative' }}>
           {[
-            'משימות אריזה מדויקות לפי חדר, צוות ופריט',
-            'אריזה עם QR אקראי — בלי מידע רגיש על המדבקה',
-            'שליחות חכמה שמאחדת בסיסי איסוף ומסבירה את המסלול',
-            'מפת חמש קומות אינטראקטיבית של בניין היעד',
-          ].map((line) => (
-            <Stack key={line} direction="row" gap={1.25} alignItems="center">
+            { icon: AssignmentRoundedIcon, text: 'משימות אריזה מדויקות לפי חדר, צוות ופריט' },
+            { icon: QrCodeScannerRoundedIcon, text: 'אריזה עם QR אקראי — בלי מידע רגיש על המדבקה' },
+            { icon: AltRouteRoundedIcon, text: 'שליחות חכמה שמאחדת בסיסי איסוף ומסבירה את המסלול' },
+            { icon: MapRoundedIcon, text: 'מפת חמש קומות אינטראקטיבית של בניין היעד' },
+          ].map(({ icon: Icon, text }) => (
+            <Stack key={text} direction="row" gap={1.5} alignItems="center">
               <Box
                 sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: palette.primary,
+                  width: 34,
+                  height: 34,
+                  borderRadius: radii.control,
+                  display: 'grid',
+                  placeItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,.08)',
                   flexShrink: 0,
                 }}
-              />
-              <Typography sx={{ fontSize: 15, opacity: 0.9 }}>{line}</Typography>
+              >
+                <Icon sx={{ fontSize: 18, opacity: 0.9 }} />
+              </Box>
+              <Typography sx={{ fontSize: 15, opacity: 0.9 }}>{text}</Typography>
             </Stack>
           ))}
         </Stack>
 
-        <Typography sx={{ fontSize: 12.5, opacity: 0.6, mt: 4 }}>
+        <Typography sx={{ fontSize: 12.5, opacity: 0.6, mt: 4, position: 'relative' }}>
           כל הנתונים במערכת הם נתוני דמה סינתטיים.
         </Typography>
       </Box>

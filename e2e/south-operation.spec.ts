@@ -34,10 +34,9 @@ test.describe('מבצע המעבר דרומה - מקצה לקצה', () => {
   test('מהמשימה ועד הציוד שמזוהה לבעליו', async ({ page }) => {
     // ---------- 1. מפקד יוצר משימת אריזה ----------
     await login(page, USERS.commander);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('בוקר טוב|צהריים טובים|ערב טוב', {
-      useInnerText: true,
-      ignoreCase: true,
-    }).catch(() => undefined);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(
+      /בוקר טוב|צהריים טובים|ערב טוב/,
+    );
 
     await page.goto('/tasks/new');
     await expect(page.getByRole('heading', { name: 'משימת אריזה חדשה' })).toBeVisible();
@@ -110,7 +109,7 @@ test.describe('מבצע המעבר דרומה - מקצה לקצה', () => {
     await page.getByRole('button', { name: 'סגירה' }).click();
 
     await expect(page.getByText(/נסגרה בהצלחה/)).toBeVisible();
-    await page.getByRole('button', { name: 'הדפסת תווית QR' }).click();
+    await page.getByRole('link', { name: 'הדפסת תווית QR' }).click();
 
     await expect(page.getByRole('heading', { name: 'תווית אריזה' })).toBeVisible();
     await expect(page.locator('#print-area svg').first()).toBeVisible();
@@ -189,7 +188,7 @@ test.describe('מבצע המעבר דרומה - מקצה לקצה', () => {
     await login(page, USERS.teamLead);
     await page.goto(packageUrl);
 
-    await expect(page.getByText('תכולת האריזה', { exact: false })).toBeVisible();
+    await expect(page.getByText(/^תכולת האריזה/)).toBeVisible();
     await expect(page.getByText(/מזהה .+ · בעלים: .+/).first()).toBeVisible();
 
     // ראש צוות אינו רשאי לערוך תכולה
