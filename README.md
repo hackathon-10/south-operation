@@ -108,16 +108,40 @@ npm run import:mapping -- path/to/mapping.csv
 
 ## פריסה ל-Vercel
 
-הפריסה מורכבת משני **פרויקטי Vercel נפרדים מאותו Repository**:
+הפריסה מורכבת משני **פרויקטי Vercel נפרדים מאותו Repository** - זו הדרך הנתמכת
+של Vercel לפרוס יותר ממוצר אחד מ-Monorepo (ראו
+[Vercel Docs - Monorepos](https://vercel.com/docs/monorepos)). **אין** פקודת
+Build יחידה לכל הפרויקט - כל אחד מהשניים הוא פרויקט Vercel נפרד עם ה-Root
+Directory שלו:
 
-| פרויקט | Root Directory | תוכן |
+| פרויקט | Root Directory | קונפיג |
 | --- | --- | --- |
-| Frontend | `apps/web` | קונפיג ב-[`vercel.json`](vercel.json) שבשורש הריפו |
-| API | `apps/api` | קונפיג ב-[`apps/api/vercel.json`](apps/api/vercel.json) |
+| Frontend | `apps/web` | [`apps/web/vercel.json`](apps/web/vercel.json) |
+| API | `apps/api` | [`apps/api/vercel.json`](apps/api/vercel.json) |
 
-שני הפרויקטים בונים מאותו Repository, ולכן שניהם צריכים גישה לקבצים שמחוץ ל-Root
-Directory שלהם (בעיקר `packages/shared`) - יש להפעיל בהגדרות הפרויקט ב-Vercel את
-**Settings → Build & Development Settings → Include files outside of the Root Directory**.
+**נקודה קריטית:** Vercel קורא את `vercel.json` **מתוך ה-Root Directory שהוגדר
+לפרויקט**, לא משורש ה-Repository. לכן לכל פרויקט יש `vercel.json` משלו בתוך
+התיקייה שלו (לא קובץ אחד משותף בשורש) - אחרת Vercel לא מוצא את הקונפיג,
+נופל חזרה לזיהוי אוטומטי של Framework, ומציג שדה Build Command יחיד גנרי
+(בדיוק התסמין "זה מצפה לפקודה אחת כמו ב-Next").
+
+שני הפרויקטים בונים מתוך אותו Repository וזקוקים לקבצים שמחוץ ל-Root Directory
+שלהם (בעיקר `packages/shared`) - **חובה** להפעיל בהגדרות כל אחד מהפרויקטים:
+**Settings → Build and Deployment → Root Directory → Include source files
+outside of the Root Directory in the Build Step**. בלי זה ה-Build ייכשל על
+"module not found" עבור `@south/shared`.
+
+### הקמה מהדשבורד (פעם אחת לכל פרויקט)
+
+1. **Add New… → Project** → יבוא ה-Repository מ-GitHub.
+2. לפני ה-Deploy הראשון: **Edit** ליד Root Directory → לבחור `apps/web` (או
+   `apps/api` בפעם השנייה).
+3. להפעיל את **Include source files outside of the Root Directory**
+   (ראו למעלה).
+4. Framework Preset אפשר להשאיר על ברירת המחדל - `vercel.json` שבתוך התיקייה
+   כבר מגדיר `framework: null` ודורס את הזיהוי האוטומטי.
+5. להוסיף את משתני הסביבה (ראו בהמשך) ולהריץ Deploy.
+6. לחזור על 1-5 ליצירת הפרויקט השני מאותו Repository.
 
 ### פרויקט ה-API
 
@@ -135,8 +159,9 @@ Directory שלהם (בעיקר `packages/shared`) - יש להפעיל בהגדר
 ### פרויקט ה-Frontend
 
 - Root Directory: `apps/web`.
-- `vercel.json` שבשורש בונה עם `npm run build:shared && npm run build -w @south/web`
-  ומגיש `apps/web/dist` כאתר סטטי (SPA fallback ל-`index.html`).
+- `apps/web/vercel.json` בונה עם `npm run build:shared && npm run build -w @south/web`
+  (מריץ מ-`cd ../..` בחזרה לשורש ה-Repository כדי לגשת ל-Workspaces) ומגיש את
+  `apps/web/dist` כאתר סטטי (SPA fallback ל-`index.html`).
 - משתנה סביבה נדרש: `VITE_API_BASE_URL` = כתובת פרויקט ה-API ב-Vercel + `/api/v1`.
 
 ## חשבונות דמו

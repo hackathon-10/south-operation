@@ -110,7 +110,7 @@ grep -rn "NoCyberHere:" apps packages
   - CORS עם רשימת Origins מפורשת מהסביבה (`CORS_ORIGINS`) ו-`credentials: true` - **אין**
     `*` בייצור.
   - ב-Vercel נוספות גם כותרות ברמת ה-Edge (`X-Content-Type-Options`, `X-Frame-Options`,
-    `Permissions-Policy`) - ראו `vercel.json` בשורש ו-`apps/api/vercel.json`.
+    `Permissions-Policy`) - ראו `apps/web/vercel.json` ו-`apps/api/vercel.json`.
 
 ### 2.7 גישה למסד נתונים (SQL Injection)
 
