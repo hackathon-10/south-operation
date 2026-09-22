@@ -194,7 +194,7 @@ export async function importMappingCsv(
       }
 
       result.importedRows += 1;
-    } catch (error) {
+    } catch {
       errors.push({
         line,
         message: 'השורה נכשלה בשמירה. ודאו שהנתונים עקביים עם המיפוי הקיים',

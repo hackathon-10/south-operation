@@ -13,7 +13,7 @@ import {
 } from '@south/shared';
 import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { OrganizationService, toAssetDto, toRoomDto } from './organization.service';
+import { OrganizationService, toRoomDto } from './organization.service';
 import { toPackageSummary, packageSummaryInclude } from '../packages/package.mapper';
 import { toTaskSummary, taskSummaryInclude } from '../packing-tasks/packing-task.mapper';
 

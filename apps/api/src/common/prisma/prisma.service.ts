@@ -43,7 +43,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       await this.$queryRaw`SELECT 1`;
       return true;
-    } catch (error) {
+    } catch {
       // לא מדליפים את פרטי החיבור או את הודעת המסד ללוג התפעולי.
       this.logger.error('בדיקת החיבור למסד הנתונים נכשלה');
       return false;
