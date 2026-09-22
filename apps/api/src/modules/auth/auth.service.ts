@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   AuditAction,
   AuthUserDto,
+  DEFAULT_DEMO_PASSWORD,
   DemoUserDto,
   LoginInput,
   LoginResponseDto,
@@ -170,8 +171,13 @@ export class AuthService {
       },
     });
 
+    // אותו כלל בדיוק כמו ב-Seed (prisma/seed.ts): אם לא הוגדרה סיסמת דמו מפורשת,
+    // בפיתוח היא תמיד DEFAULT_DEMO_PASSWORD, ובפרודקשן היא אקראית ולא ידועה כאן.
+    const demoPassword =
+      this.config.SEED_DEMO_PASSWORD ?? (this.config.isProduction ? null : DEFAULT_DEMO_PASSWORD);
+
     return {
-      demoPassword: this.config.SEED_DEMO_PASSWORD ?? null,
+      demoPassword,
       users: users.map((user) => ({
         email: user.email,
         fullName: user.fullName,

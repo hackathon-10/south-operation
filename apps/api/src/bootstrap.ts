@@ -11,14 +11,15 @@ import { TraceIdMiddleware } from './common/http/trace-id.middleware';
 export const API_PREFIX = 'api/v1';
 
 /**
- * בניית האפליקציה. משותפת להרצה מקומית ול-Serverless ב-Vercel,
- * כדי ששתי הסביבות יקבלו בדיוק את אותן הגדרות אבטחה.
+ * מגדיר על אפליקציית Nest קיימת (מ-NestFactory.create או מ-Test.createTestingModule)
+ * את כל שכבות האבטחה והתשתית המשותפות.
+ *
+ * חובה לקרוא לפונקציה הזו מכל נקודת כניסה שמריצה את ה-API (הרצה מקומית, Vercel,
+ * ושרת ההדגמה/Playwright ב-test/e2e-server.ts) - אחרת סביבות שונות מקבלות הגדרות
+ * אבטחה שונות בלי ששמים לב (למשל: בלי cookie-parser, ה-Refresh Token לעולם לא
+ * ייקרא מה-Cookie וכל רענון סשן ייכשל בשקט).
  */
-export async function createApp(): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log'],
-  });
-
+export function configureApp(app: INestApplication): AppConfig {
   const config = app.get<AppConfig>(APP_CONFIG);
 
   app.setGlobalPrefix(API_PREFIX);
@@ -111,6 +112,22 @@ export async function createApp(): Promise<INestApplication> {
       'ENABLE_DEMO_LOGIN פעיל בסביבת פרודקשן. מסך בחירת משתמשי הדמו יהיה זמין.',
     );
   }
+
+  return config;
+}
+
+/**
+ * בניית האפליקציה להרצה מקומית (`main.ts`) ול-Serverless ב-Vercel (`api/index.ts`).
+ * שרת ההדגמה/Playwright (`test/e2e-server.ts`) בונה את ה-App דרך
+ * `Test.createTestingModule` (כדי להחליף את `PrismaService`) וקורא ל-`configureApp`
+ * ישירות במקום לפונקציה הזו.
+ */
+export async function createApp(): Promise<INestApplication> {
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log'],
+  });
+
+  configureApp(app);
 
   return app;
 }

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { API_PREFIX, createApp } from './bootstrap';

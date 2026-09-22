@@ -53,6 +53,14 @@ export const EARTH_RADIUS_KM = 6371;
 /** אורך ה-Token האקראי שמוטמע ב-QR (בבתים לפני קידוד). */
 export const PACKAGE_TOKEN_BYTES = 32;
 
+/**
+ * סיסמת ברירת המחדל למשתמשי דמו כשלא הוגדר SEED_DEMO_PASSWORD בסביבת פיתוח
+ * (לעולם לא בפרודקשן - ראו apps/api/prisma/seed.ts ו-auth.service.ts).
+ * מוגדרת פעם אחת כאן כדי ש-ה-Seed ומסך "משתמשי דמו" בהתחברות תמיד יסכימו על
+ * אותה סיסמה - אחרת מסך הבחירה ממלא סיסמה שגויה או ריקה.
+ */
+export const DEFAULT_DEMO_PASSWORD = 'Demo!2345';
+
 /** נתיב הסריקה ב-Frontend. ה-QR מכיל רק את ה-Token האטום. */
 export const SCAN_PATH = '/scan/package';
 

@@ -9,9 +9,7 @@
 import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
-import { API_PREFIX } from '../src/bootstrap';
-import { AllExceptionsFilter } from '../src/common/errors/all-exceptions.filter';
-import { TraceIdMiddleware } from '../src/common/http/trace-id.middleware';
+import { configureApp } from '../src/bootstrap';
 import { PrismaService } from '../src/common/prisma/prisma.service';
 import { runSeed } from '../prisma/seed';
 import { createTestDatabase } from './test-database';
@@ -45,13 +43,7 @@ async function bootstrap(): Promise<void> {
     .compile();
 
   const app = moduleRef.createNestApplication();
-  app.setGlobalPrefix(API_PREFIX);
-  app.use(new TraceIdMiddleware().use.bind(new TraceIdMiddleware()));
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.enableCors({
-    origin: process.env.CORS_ORIGINS!.split(','),
-    credentials: true,
-  });
+  configureApp(app);
 
   await app.listen(PORT, '127.0.0.1');
   console.log(`[e2e] API לבדיקות עלה על פורט ${PORT}`);

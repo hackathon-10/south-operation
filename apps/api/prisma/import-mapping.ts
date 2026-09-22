@@ -4,6 +4,7 @@
  * שימוש:
  *   npm run import:mapping -w @south/api -- ./docs/samples/mapping-sample.csv
  */
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

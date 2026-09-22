@@ -10,6 +10,7 @@
 import { hash } from '@node-rs/argon2';
 import { PrismaClient } from '@prisma/client';
 import {
+  DEFAULT_DEMO_PASSWORD,
   FLOOR_MAP_CANVAS,
   FLOOR_MAP_LAYOUT,
   HUB_BUILDING_NAME,
@@ -51,7 +52,7 @@ async function resolveDemoPassword(): Promise<{ password: string; generated: boo
     // Reason: בפרודקשן חובה לספק סיסמה דרך הסביבה, או שתיווצר אקראית ותוצג פעם אחת.
     return { password: randomBytes(12).toString('base64url'), generated: true };
   }
-  return { password: 'Demo!2345', generated: false };
+  return { password: DEFAULT_DEMO_PASSWORD, generated: false };
 }
 
 async function wipe(): Promise<void> {
@@ -366,12 +367,6 @@ export async function runSeed(client: PrismaClient): Promise<void> {
 
   // ---------- תרחיש עסקי ----------
   console.log('יוצר משימות, אריזות ושליחויות...');
-
-  interface LineSpec {
-    sku: string;
-    quantity?: number;
-    assetIndex?: number;
-  }
 
   let taskSeq = 100;
   let packageSeq = 10000;
@@ -1150,8 +1145,14 @@ export async function runSeed(client: PrismaClient): Promise<void> {
   void task7;
 }
 
-/** הרצה כ-CLI: npm run seed */
+/**
+ * הרצה כ-CLI: npm run seed.
+ * טעינת .env מוגבלת לנתיב ה-CLI בלבד - כשה-Seed מיובא כמודול (מ-e2e-server.ts
+ * או מבדיקות), משתני הסביבה כבר מוגדרים במפורש ואין לדרוס אותם בטעות.
+ */
 if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- טעינה מותנית, ראו הערה למעלה
+  require('dotenv/config');
   const client = new PrismaClient();
   runSeed(client)
     .catch((error) => {

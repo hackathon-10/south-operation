@@ -35,8 +35,15 @@ export const envSchema = z
 
     /** מסך בחירת משתמשי דמו. לפיתוח והדגמה בלבד. */
     ENABLE_DEMO_LOGIN: booleanFromEnv,
-    /** סיסמת משתמשי הדמו, משמשת גם את ה-seed וגם את מסך הדמו. */
-    SEED_DEMO_PASSWORD: z.string().min(8).optional(),
+    /**
+     * סיסמת משתמשי הדמו, משמשת גם את ה-seed וגם את מסך הדמו.
+     * מחרוזת ריקה (כמו ב-.env.example) נחשבת "לא הוגדר", בדיוק כמו שלא היה מוגדר
+     * בכלל - אחרת כל מי שמעתיק את .env.example כלשונו נתקל בכשל אימות בעלייה.
+     */
+    SEED_DEMO_PASSWORD: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(8).optional(),
+    ),
 
     /** נשמר בצד השרת בלבד ולעולם לא נחשף ל-Frontend. */
     SUPABASE_URL: z.string().url().optional().or(z.literal('')),
