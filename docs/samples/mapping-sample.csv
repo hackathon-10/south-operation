@@ -1,0 +1,9 @@
+baseCode,unitCode,teamCode,building,floor,roomNumber,sku,productName,category,trackingMode,quantity,assetTag,ownerName,ownerIdentityNumber
+GDN,GDN-TECH,DEV-A,בניין 7,1,12,LT-PRO-16,מחשב נייד 16 אינץ׳,מחשבים,SERIALIZED,1,LT-PRO-16-9001,רב״ט דנה כהן,
+GDN,GDN-TECH,DEV-A,בניין 7,1,12,MN-27,מסך 27 אינץ׳,מסכים,SERIALIZED,1,MN-27-4021,רב״ט דנה כהן,
+GDN,GDN-TECH,DEV-A,בניין 7,1,12,ACC-MOUSE,עכבר אלחוטי,ציוד היקפי,BULK,6,,,
+GDN,GDN-TECH,DEV-A,בניין 7,1,12,ACC-KEYB,מקלדת עברית,ציוד היקפי,BULK,6,,,
+GDN,GDN-TECH,DEV-B,בניין 7,1,14,DT-WS-01,מחשב שולחני עמדת עבודה,מחשבים,SERIALIZED,1,DT-WS-01-1187,טוראי אלעד גולן,
+GDN,GDN-TECH,DEV-B,בניין 7,1,14,ACC-HDMI,כבל HDMI 2 מטר,כבלים,BULK,10,,,
+GDN,GDN-LOG,NET,בניין 9,1,3,NET-SW-24,מתג רשת 24 פורטים,תקשורת,BULK,2,,,
+GDN,GDN-LOG,NET,בניין 9,1,3,NET-PATCH,פאנל פאטש,תקשורת,BULK,4,,,
