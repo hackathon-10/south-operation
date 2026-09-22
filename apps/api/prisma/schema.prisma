@@ -1,0 +1,681 @@
+// סכמת מסד הנתונים של מערכת המעבר דרומה.
+// מסד הנתונים בפועל הוא PostgreSQL המנוהל ב-Supabase.
+//
+// NoCyberHere: PARAMETERIZED_DATABASE_ACCESS
+// Threat: SQL Injection
+// Reason: כל הגישה למסד עוברת דרך Prisma עם שאילתות פרמטריות. אין בניית SQL ממחרוזות משתמש.
+
+generator client {
+  provider = "prisma-client-js"
+  // driverAdapters מאפשר להריץ את בדיקות האינטגרציה מול Postgres בתוך התהליך (PGlite),
+  // בלי להפעיל שרת מסד חיצוני. בפרודקשן נעשה שימוש בחיבור הרגיל ל-Supabase.
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  // חיבור דרך ה-Connection Pooler של Supabase (מתאים ל-Serverless ב-Vercel).
+  url       = env("DATABASE_URL")
+  // חיבור ישיר, נדרש להרצת migrations בלבד.
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum UserRole {
+  LOGISTICS_COMMANDER
+  LOGISTICS_SOLDIER
+  TEAM_LEAD
+}
+
+enum UnitType {
+  UNIT
+  BRANCH
+  SECTION
+}
+
+enum MappingStatus {
+  MAPPED
+  NOT_MAPPED
+}
+
+enum DoorSide {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+}
+
+enum TrackingMode {
+  SERIALIZED
+  BULK
+}
+
+enum AssetStatus {
+  AVAILABLE
+  RESERVED_FOR_TASK
+  PACKED
+  IN_TRANSIT
+  RECEIVED
+  DELIVERED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum PackingTaskStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PackageType {
+  PROFESSIONAL_BOX
+  PERSONAL_BOX
+  PALLET
+  CRATE
+  BULK_CONTAINER
+}
+
+enum PackageStatus {
+  OPEN
+  SEALED
+  READY_FOR_SHIPMENT
+  ASSIGNED_TO_MISSION
+  IN_TRANSIT
+  RECEIVED_AT_HUB
+  DELIVERED_TO_ROOM
+}
+
+enum VehicleType {
+  TRUCK
+  OTHER
+}
+
+enum MissionStatus {
+  DRAFT
+  PLANNED
+  LOADING
+  IN_TRANSIT
+  UNLOADING
+  COMPLETED
+  CANCELLED
+}
+
+enum StopType {
+  START
+  PICKUP
+  DELIVERY_HUB
+  END
+}
+
+enum StopStatus {
+  PLANNED
+  ARRIVED
+  COMPLETED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================================
+// ארגון ומשתמשים
+// ============================================================
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  /// מספר אישי - נתוני דמה סינתטיים בלבד.
+  identityNumber String   @unique @db.VarChar(20)
+  fullName       String   @db.VarChar(120)
+  email          String   @unique @db.VarChar(120)
+  /// Argon2id hash בלבד. סיסמה גלויה לעולם אינה נשמרת.
+  passwordHash   String
+  role           UserRole
+  baseId         String?  @db.Uuid
+  teamId         String?  @db.Uuid
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  base                Base?                 @relation(fields: [baseId], references: [id], onDelete: SetNull)
+  team                Team?                 @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull)
+  ledTeams            Team[]                @relation("TeamLead")
+  createdTasks        PackingTask[]         @relation("TaskCreatedBy")
+  assignedTasks       PackingTask[]         @relation("TaskAssignedSoldier")
+  createdPackages     Package[]             @relation("PackageCreatedBy")
+  packageEvents       PackageStatusEvent[]
+  createdMissions     TransportMission[]    @relation("MissionCreatedBy")
+  assignedMissions    TransportMission[]    @relation("MissionAssignedSoldier")
+  loadedPackages      MissionPackage[]      @relation("MissionPackageLoadedBy")
+  unloadedPackages    MissionPackage[]      @relation("MissionPackageUnloadedBy")
+  joinRequests        MissionJoinRequest[]  @relation("JoinRequestRequester")
+  reviewedRequests    MissionJoinRequest[]  @relation("JoinRequestReviewer")
+  auditLogs           AuditLog[]
+  refreshSessions     RefreshSession[]
+  idempotencyRecords  IdempotencyRecord[]
+
+  @@index([role])
+  @@index([baseId])
+  @@index([teamId])
+}
+
+/// סשן Refresh מאוחסן כ-hash בלבד, כדי לאפשר ביטול מיידי בהתנתקות.
+/// NoCyberHere: AUTHENTICATION
+/// Threat: גניבת Refresh Token ושימוש חוזר בו
+/// Reason: שמירת hash בלבד + אפשרות לביטול (revoke) הופכת גניבת Token לניתנת לעצירה
+model RefreshSession {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Base {
+  id                String  @id @default(uuid()) @db.Uuid
+  code              String  @unique @db.VarChar(20)
+  name              String  @db.VarChar(120)
+  addressText       String  @db.VarChar(200)
+  /// נקודות ציון דמה בלבד.
+  latitude          Decimal @db.Decimal(9, 6)
+  longitude         Decimal @db.Decimal(9, 6)
+  isDestinationHub  Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  users        User[]
+  units        OrganizationalUnit[]
+  rooms        Room[]
+  floorMaps    FloorMap[]
+  missionStops MissionStop[]
+  joinRequests MissionJoinRequest[]
+
+  @@index([isDestinationHub])
+}
+
+model OrganizationalUnit {
+  id       String   @id @default(uuid()) @db.Uuid
+  name     String   @db.VarChar(120)
+  code     String   @db.VarChar(30)
+  baseId   String   @db.Uuid
+  parentId String?  @db.Uuid
+  type     UnitType @default(UNIT)
+
+  base     Base                 @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  parent   OrganizationalUnit?  @relation("UnitHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children OrganizationalUnit[] @relation("UnitHierarchy")
+  teams    Team[]
+  rooms    Room[]
+
+  @@unique([baseId, code])
+  @@index([parentId])
+}
+
+model Team {
+  id         String  @id @default(uuid()) @db.Uuid
+  name       String  @db.VarChar(120)
+  code       String  @db.VarChar(30)
+  unitId     String  @db.Uuid
+  leadUserId String? @db.Uuid
+
+  unit     OrganizationalUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  lead     User?              @relation("TeamLead", fields: [leadUserId], references: [id], onDelete: SetNull)
+  members  User[]             @relation("TeamMembers")
+  rooms    Room[]
+  tasks    PackingTask[]
+  packages Package[]
+
+  @@unique([unitId, code])
+  @@index([leadUserId])
+}
+
+// ============================================================
+// חדרים ומפות
+// ============================================================
+
+model Room {
+  id            String        @id @default(uuid()) @db.Uuid
+  baseId        String        @db.Uuid
+  unitId        String?       @db.Uuid
+  teamId        String?       @db.Uuid
+  building      String        @db.VarChar(80)
+  floor         String        @db.VarChar(10)
+  roomNumber    String        @db.VarChar(20)
+  displayName   String        @db.VarChar(120)
+  /// קיים רק לחדרים שמופיעים במפה האינטראקטיבית.
+  floorMapId    String?       @db.Uuid
+  mappingStatus MappingStatus @default(MAPPED)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  base                Base                @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  unit                OrganizationalUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  team                Team?               @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  floorMap            FloorMap?           @relation(fields: [floorMapId], references: [id], onDelete: SetNull)
+  mapShape            RoomMapShape?
+  inventory           RoomInventory[]
+  assets              AssetInstance[]
+  sourceTasks         PackingTask[]       @relation("TaskSourceRoom")
+  destinationTasks    PackingTask[]       @relation("TaskDestinationRoom")
+  sourcePackages      Package[]           @relation("PackageSourceRoom")
+  destinationPackages Package[]           @relation("PackageDestinationRoom")
+
+  @@unique([baseId, building, floor, roomNumber])
+  @@index([teamId])
+  @@index([floorMapId])
+  @@index([baseId, building, floor])
+}
+
+model FloorMap {
+  id           String @id @default(uuid()) @db.Uuid
+  baseId       String @db.Uuid
+  building     String @db.VarChar(80)
+  floorNumber  Int
+  displayName  String @db.VarChar(120)
+  canvasWidth  Int    @default(1000)
+  canvasHeight Int    @default(600)
+  version      Int    @default(1)
+
+  base   Base           @relation(fields: [baseId], references: [id], onDelete: Cascade)
+  rooms  Room[]
+  shapes RoomMapShape[]
+
+  @@unique([baseId, building, floorNumber])
+}
+
+model RoomMapShape {
+  id         String   @id @default(uuid()) @db.Uuid
+  floorMapId String   @db.Uuid
+  roomId     String   @unique @db.Uuid
+  x          Int
+  y          Int
+  width      Int
+  height     Int
+  doorSide   DoorSide @default(SOUTH)
+  zone       String?  @db.VarChar(60)
+
+  floorMap FloorMap @relation(fields: [floorMapId], references: [id], onDelete: Cascade)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([floorMapId])
+}
+
+// ============================================================
+// קטלוג, פריטים ומלאי
+// ============================================================
+
+model ProductCatalogItem {
+  id            String       @id @default(uuid()) @db.Uuid
+  sku           String       @unique @db.VarChar(40)
+  name          String       @db.VarChar(120)
+  category      String       @db.VarChar(60)
+  trackingMode  TrackingMode
+  unitOfMeasure String       @default("יח׳") @db.VarChar(20)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  assets           AssetInstance[]
+  roomInventory    RoomInventory[]
+  taskLines        PackingTaskLine[]
+  packageBulkLines PackageBulkLine[]
+
+  @@index([category])
+  @@index([trackingMode])
+}
+
+/// מחשב או מסך פיזי מסוים. אין לו QR - רק מדבקת ID טקסטואלית.
+model AssetInstance {
+  id                   String      @id @default(uuid()) @db.Uuid
+  assetTag             String      @unique @db.VarChar(60)
+  productCatalogItemId String      @db.Uuid
+  ownerName            String      @db.VarChar(120)
+  ownerIdentityNumber  String?     @db.VarChar(20)
+  currentRoomId        String?     @db.Uuid
+  status               AssetStatus @default(AVAILABLE)
+  /// המשימה שמשריינת את הפריט כרגע (§8.13).
+  reservedForTaskId    String?     @db.Uuid
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  product         ProductCatalogItem @relation(fields: [productCatalogItemId], references: [id], onDelete: Restrict)
+  currentRoom     Room?              @relation(fields: [currentRoomId], references: [id], onDelete: SetNull)
+  reservedForTask PackingTask?       @relation(fields: [reservedForTaskId], references: [id], onDelete: SetNull)
+  taskLines       PackingTaskLine[]
+  packageAsset    PackageAsset?
+
+  @@index([currentRoomId])
+  @@index([status])
+  @@index([ownerName])
+  @@index([productCatalogItemId])
+}
+
+/// מלאי כמותי של ציוד BULK בחדר.
+model RoomInventory {
+  id                   String @id @default(uuid()) @db.Uuid
+  roomId               String @db.Uuid
+  productCatalogItemId String @db.Uuid
+  mappedQuantity       Int    @default(0)
+  reservedQuantity     Int    @default(0)
+  packedQuantity       Int    @default(0)
+  deliveredQuantity    Int    @default(0)
+
+  room    Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  product ProductCatalogItem @relation(fields: [productCatalogItemId], references: [id], onDelete: Restrict)
+
+  @@unique([roomId, productCatalogItemId])
+  @@index([productCatalogItemId])
+}
+
+// ============================================================
+// משימות אריזה
+// ============================================================
+
+model PackingTask {
+  id                String            @id @default(uuid()) @db.Uuid
+  taskNumber        String            @unique @db.VarChar(20)
+  sourceRoomId      String            @db.Uuid
+  destinationRoomId String            @db.Uuid
+  teamId            String            @db.Uuid
+  assignedSoldierId String            @db.Uuid
+  createdById       String            @db.Uuid
+  priority          TaskPriority      @default(NORMAL)
+  dueAt             DateTime?
+  notes             String?           @db.VarChar(1000)
+  status            PackingTaskStatus @default(ASSIGNED)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  sourceRoom       Room              @relation("TaskSourceRoom", fields: [sourceRoomId], references: [id], onDelete: Restrict)
+  destinationRoom  Room              @relation("TaskDestinationRoom", fields: [destinationRoomId], references: [id], onDelete: Restrict)
+  team             Team              @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  assignedSoldier  User              @relation("TaskAssignedSoldier", fields: [assignedSoldierId], references: [id], onDelete: Restrict)
+  createdBy        User              @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  lines            PackingTaskLine[]
+  packages         Package[]
+  reservedAssets   AssetInstance[]
+
+  @@index([assignedSoldierId])
+  @@index([status])
+  @@index([sourceRoomId])
+  @@index([teamId])
+  @@index([priority, createdAt])
+}
+
+model PackingTaskLine {
+  id                   String  @id @default(uuid()) @db.Uuid
+  packingTaskId        String  @db.Uuid
+  productCatalogItemId String  @db.Uuid
+  /// נדרש ב-SERIALIZED, אסור ב-BULK. נאכף גם ב-Check Constraint במסד.
+  assetInstanceId      String? @db.Uuid
+  requestedQuantity    Int
+  packedQuantity       Int     @default(0)
+
+  task          PackingTask        @relation(fields: [packingTaskId], references: [id], onDelete: Cascade)
+  product       ProductCatalogItem @relation(fields: [productCatalogItemId], references: [id], onDelete: Restrict)
+  assetInstance AssetInstance?     @relation(fields: [assetInstanceId], references: [id], onDelete: Restrict)
+
+  @@index([packingTaskId])
+  @@index([assetInstanceId])
+}
+
+// ============================================================
+// אריזות
+// ============================================================
+
+model Package {
+  id                String        @id @default(uuid()) @db.Uuid
+  packageNumber     String        @unique @db.VarChar(20)
+  /// Token אקראי וחזק שמוטמע ב-QR. אינו נגזר ממספר האריזה.
+  publicToken       String        @unique @db.VarChar(120)
+  packingTaskId     String        @db.Uuid
+  sourceRoomId      String        @db.Uuid
+  destinationRoomId String        @db.Uuid
+  teamId            String        @db.Uuid
+  packageType       PackageType   @default(PROFESSIONAL_BOX)
+  status            PackageStatus @default(OPEN)
+  notes             String?       @db.VarChar(1000)
+  sealedAt          DateTime?
+  departedAt        DateTime?
+  receivedAt        DateTime?
+  deliveredAt       DateTime?
+  createdById       String        @db.Uuid
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  task            PackingTask               @relation(fields: [packingTaskId], references: [id], onDelete: Restrict)
+  sourceRoom      Room                      @relation("PackageSourceRoom", fields: [sourceRoomId], references: [id], onDelete: Restrict)
+  destinationRoom Room                      @relation("PackageDestinationRoom", fields: [destinationRoomId], references: [id], onDelete: Restrict)
+  team            Team                      @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  createdBy       User                      @relation("PackageCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  assets          PackageAsset[]
+  bulkLines       PackageBulkLine[]
+  statusEvents    PackageStatusEvent[]
+  missionPackage  MissionPackage?
+  joinRequestLinks MissionJoinRequestPackage[]
+
+  @@index([status])
+  @@index([teamId])
+  @@index([destinationRoomId])
+  @@index([packingTaskId])
+  @@index([sourceRoomId, status])
+}
+
+model PackageAsset {
+  id                  String   @id @default(uuid()) @db.Uuid
+  packageId           String   @db.Uuid
+  /// פריט ייחודי יכול להיות באריזה אחת בלבד.
+  assetInstanceId     String   @unique @db.Uuid
+  assetTagSnapshot    String   @db.VarChar(60)
+  productNameSnapshot String   @db.VarChar(120)
+  ownerNameSnapshot   String   @db.VarChar(120)
+  addedAt             DateTime @default(now())
+
+  package       Package       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  assetInstance AssetInstance @relation(fields: [assetInstanceId], references: [id], onDelete: Restrict)
+
+  @@index([packageId])
+}
+
+model PackageBulkLine {
+  id                   String   @id @default(uuid()) @db.Uuid
+  packageId            String   @db.Uuid
+  productCatalogItemId String   @db.Uuid
+  quantity             Int
+  addedAt              DateTime @default(now())
+
+  package Package            @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  product ProductCatalogItem @relation(fields: [productCatalogItemId], references: [id], onDelete: Restrict)
+
+  @@unique([packageId, productCatalogItemId])
+  @@index([packageId])
+}
+
+/// ציר זמן אמין של האריזה. נוצר באותה transaction שבה הסטטוס משתנה.
+model PackageStatusEvent {
+  id          String         @id @default(uuid()) @db.Uuid
+  packageId   String         @db.Uuid
+  fromStatus  PackageStatus?
+  toStatus    PackageStatus
+  actorUserId String         @db.Uuid
+  missionId   String?        @db.Uuid
+  note        String?        @db.VarChar(500)
+  createdAt   DateTime       @default(now())
+
+  package Package           @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  actor   User              @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  mission TransportMission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+
+  @@index([packageId, createdAt])
+}
+
+// ============================================================
+// שליחויות
+// ============================================================
+
+model TransportMission {
+  id                            String        @id @default(uuid()) @db.Uuid
+  missionNumber                 String        @unique @db.VarChar(20)
+  title                         String        @db.VarChar(200)
+  createdById                   String        @db.Uuid
+  assignedSoldierId             String?       @db.Uuid
+  vehicleType                   VehicleType   @default(TRUCK)
+  vehicleDetails                String?       @db.VarChar(200)
+  licensePlate                  String?       @db.VarChar(20)
+  requiresSecuredTransport      Boolean       @default(false)
+  /// הנחיות דמה כלליות. מוחזרות רק למשתמשים מורשים.
+  securedTransportNotes         String?       @db.VarChar(1000)
+  plannedDepartureAt            DateTime
+  actualDepartureAt             DateTime?
+  completedAt                   DateTime?
+  status                        MissionStatus @default(DRAFT)
+  routeDistanceKmEstimate       Decimal?      @db.Decimal(8, 2)
+  routeDurationMinutesEstimate  Int?
+  optimizationScore             Decimal?      @db.Decimal(6, 2)
+  /// הסבר ההצעה שהוצגה למפקד (מערך מחרוזות).
+  routeExplanation              Json?
+  createdAt                     DateTime      @default(now())
+  updatedAt                     DateTime      @updatedAt
+
+  createdBy       User                 @relation("MissionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedSoldier User?                @relation("MissionAssignedSoldier", fields: [assignedSoldierId], references: [id], onDelete: SetNull)
+  stops           MissionStop[]
+  packages        MissionPackage[]
+  joinRequests    MissionJoinRequest[]
+  packageEvents   PackageStatusEvent[]
+
+  @@index([status])
+  @@index([plannedDepartureAt])
+  @@index([assignedSoldierId])
+}
+
+model MissionStop {
+  id                 String     @id @default(uuid()) @db.Uuid
+  transportMissionId String     @db.Uuid
+  baseId             String     @db.Uuid
+  sequence           Int
+  stopType           StopType
+  status             StopStatus @default(PLANNED)
+  plannedAt          DateTime?
+  arrivedAt          DateTime?
+  completedAt        DateTime?
+
+  mission  TransportMission @relation(fields: [transportMissionId], references: [id], onDelete: Cascade)
+  base     Base             @relation(fields: [baseId], references: [id], onDelete: Restrict)
+  packages MissionPackage[]
+
+  @@unique([transportMissionId, sequence])
+  @@index([transportMissionId, sequence])
+}
+
+model MissionPackage {
+  id                 String    @id @default(uuid()) @db.Uuid
+  transportMissionId String    @db.Uuid
+  packageId          String    @unique @db.Uuid
+  pickupStopId       String    @db.Uuid
+  loadedAt           DateTime?
+  unloadedAt         DateTime?
+  loadedById         String?   @db.Uuid
+  unloadedById       String?   @db.Uuid
+
+  mission    TransportMission @relation(fields: [transportMissionId], references: [id], onDelete: Cascade)
+  package    Package          @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  pickupStop MissionStop      @relation(fields: [pickupStopId], references: [id], onDelete: Cascade)
+  loadedBy   User?            @relation("MissionPackageLoadedBy", fields: [loadedById], references: [id], onDelete: SetNull)
+  unloadedBy User?            @relation("MissionPackageUnloadedBy", fields: [unloadedById], references: [id], onDelete: SetNull)
+
+  @@index([transportMissionId])
+  @@index([pickupStopId])
+}
+
+model MissionJoinRequest {
+  id                 String            @id @default(uuid()) @db.Uuid
+  transportMissionId String            @db.Uuid
+  requestingUserId   String            @db.Uuid
+  baseId             String            @db.Uuid
+  status             JoinRequestStatus @default(PENDING)
+  note               String?           @db.VarChar(1000)
+  reviewedById       String?           @db.Uuid
+  reviewedAt         DateTime?
+  createdAt          DateTime          @default(now())
+
+  mission        TransportMission            @relation(fields: [transportMissionId], references: [id], onDelete: Cascade)
+  requestingUser User                        @relation("JoinRequestRequester", fields: [requestingUserId], references: [id], onDelete: Restrict)
+  reviewedBy     User?                       @relation("JoinRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  base           Base                        @relation(fields: [baseId], references: [id], onDelete: Restrict)
+  packages       MissionJoinRequestPackage[]
+
+  @@index([status])
+  @@index([transportMissionId])
+  @@index([requestingUserId])
+}
+
+model MissionJoinRequestPackage {
+  id             String @id @default(uuid()) @db.Uuid
+  joinRequestId  String @db.Uuid
+  packageId      String @db.Uuid
+
+  joinRequest MissionJoinRequest @relation(fields: [joinRequestId], references: [id], onDelete: Cascade)
+  package     Package            @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([joinRequestId, packageId])
+  @@index([packageId])
+}
+
+// ============================================================
+// Audit ו-Idempotency
+// ============================================================
+
+/// NoCyberHere: SECURITY_LOGGING
+/// Threat: חוסר יכולת לחקור אירוע אבטחה או שינוי עסקי
+/// Reason: תיעוד פעולות משמעותיות. לא נשמרים סיסמאות, Tokens או מידע אישי מלא.
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String   @db.VarChar(60)
+  entityType  String   @db.VarChar(60)
+  entityId    String?  @db.Uuid
+  beforeJson  Json?
+  afterJson   Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+}
+
+/// מונע ביצוע כפול של פעולות סריקה קריטיות (§11).
+model IdempotencyRecord {
+  id           String   @id @default(uuid()) @db.Uuid
+  scope        String   @db.VarChar(60)
+  key          String   @db.VarChar(100)
+  userId       String   @db.Uuid
+  entityId     String?  @db.Uuid
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([scope, key, userId])
+  @@index([createdAt])
+}

@@ -1,0 +1,45 @@
+{
+  "name": "south-operation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "מערכת המעבר דרומה - ניהול אריזה, שינוע וקליטה של ציוד",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build:shared": "npm run build -w @south/shared",
+    "build": "npm run build:shared && npm run build -w @south/api && npm run build -w @south/web",
+    "dev": "npm run build:shared && concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev -w @south/api",
+    "dev:web": "npm run dev -w @south/web",
+    "prisma:generate": "npm run prisma:generate -w @south/api",
+    "migrate": "npm run migrate -w @south/api",
+    "migrate:deploy": "npm run migrate:deploy -w @south/api",
+    "seed": "npm run seed -w @south/api",
+    "import:mapping": "npm run import:mapping -w @south/api",
+    "test": "npm run build:shared && npm run test -w @south/shared && npm run test -w @south/api && npm run test -w @south/web",
+    "test:api": "npm run test -w @south/api",
+    "test:web": "npm run test -w @south/web",
+    "test:e2e:api": "npm run test:e2e -w @south/api",
+    "test:e2e": "playwright test",
+    "lint": "npm run lint -w @south/shared && npm run lint -w @south/api && npm run lint -w @south/web",
+    "typecheck": "npm run build:shared && npm run typecheck -w @south/api && npm run typecheck -w @south/web",
+    "security": "powershell -ExecutionPolicy Bypass -File ./scripts/NoCyberHere-Security.ps1 -SkipZap -SkipTrivy",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "demo": "npm run build:shared && concurrently -n api,web -c blue,magenta \"npm run e2e:server -w @south/api\" \"npm run dev:demo -w @south/web\""
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "concurrently": "9.1.2",
+    "eslint": "9.17.0",
+    "prettier": "3.4.2",
+    "typescript": "5.6.3",
+    "typescript-eslint": "8.18.2",
+    "@eslint/js": "9.17.0",
+    "globals": "15.14.0"
+  }
+}

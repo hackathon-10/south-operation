@@ -1,0 +1,14 @@
+{
+  "name": "המעבר דרומה",
+  "short_name": "מעבר דרומה",
+  "description": "ניהול אריזה, שינוע וקליטה של ציוד",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F5F9",
+  "theme_color": "#0B1A2E",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -22,3 +22,24 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# build output
+dist/
+apps/web/dist/
+packages/shared/dist/
+
+# security reports
+.nocyberhere/
+
+# playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# vercel
+.vercel
+
+# local env
+.env.local
+.env.*.local
