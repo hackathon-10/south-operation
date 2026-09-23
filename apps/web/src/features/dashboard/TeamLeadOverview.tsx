@@ -15,6 +15,7 @@ import { formatDateTime } from '../../utils/format';
 import { labels, packageTone } from '../../utils/status';
 import { HorizontalBarChart } from './charts';
 import { GreetingHero } from './GreetingHero';
+import { QuickInsightChat } from './QuickInsightChat';
 
 /** מסך ראש הצוות: רק האריזות של הצוותים שלו (§10.5). */
 export function TeamLeadOverview() {
@@ -63,6 +64,15 @@ export function TeamLeadOverview() {
             />
           </>
         }
+      />
+
+      <QuickInsightChat
+        prompts={[
+          { label: 'כמה אריזות בצוות?', answer: `בצוות יש ${data.totalPackages} אריזות.` },
+          { label: 'כמה בדרך?', answer: `בדרך כרגע ${data.inTransitPackages} אריזות.` },
+          { label: 'כמה הגיעו?', answer: `הגיעו לחדר ${data.deliveredPackages} אריזות.` },
+          { label: 'כמה מסכים ומשתמשים?', answer: `יש ${data.assetsCount} פריטי ציוד ברשימה.` },
+        ]}
       />
 
       <Card sx={{ p: 2.5, mb: 3 }}>

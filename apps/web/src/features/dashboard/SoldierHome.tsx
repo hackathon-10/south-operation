@@ -15,6 +15,7 @@ import { palette, tones } from '../../theme/tokens';
 import { formatDateTime, formatRelative } from '../../utils/format';
 import { labels, missionTone, packageTone, priorityTone } from '../../utils/status';
 import { GreetingHero } from './GreetingHero';
+import { QuickInsightChat } from './QuickInsightChat';
 
 /** "הבית שלי" של חייל הלוגיסטיקה - המשימה הבאה ופעולה אחת ברורה (§10.4). */
 export function SoldierHome() {
@@ -61,6 +62,15 @@ export function SoldierHome() {
             />
           </>
         }
+      />
+
+      <QuickInsightChat
+        prompts={[
+          { label: 'מה המשימה הבאה?', answer: nextTask ? `המשימה הבאה היא ${nextTask.sourceRoomName} → ${nextTask.destinationRoomName}.` : 'אין כרגע משימה פעילה.' },
+          { label: 'כמה אריזות פתוחות?', answer: `יש ${data.openPackages.length} אריזות פתוחות.` },
+          { label: 'כמה הושלמו היום?', answer: `הושלמו היום ${data.completedTodayCount} משימות.` },
+          { label: 'האם יש שליחויות?', answer: data.myMissions.length > 0 ? `יש ${data.myMissions.length} שליחויות משויכות אליך.` : 'אין שליחויות משויכות כרגע.' },
+        ]}
       />
 
       {/* המשימה הבאה - הפעולה הראשית במסך */}
