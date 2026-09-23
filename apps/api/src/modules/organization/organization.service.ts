@@ -17,6 +17,7 @@ import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { paginate, toSkipTake } from '../../common/utils/pagination.util';
 import type { AuthenticatedUser } from '../auth/auth.types';
+import { canViewRoom, isCommander, isOperationManager, isSoldier, isTeamLead } from '../../common/authz/access-control';
 
 const roomInclude = {
   base: { select: { id: true, name: true } },
@@ -73,6 +74,26 @@ export class OrganizationService {
     }));
   }
 
+  private async roomScopeForRoomId(roomId: string): Promise<{ room: RoomWithRelations; hubBaseId: string | null }> {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: roomInclude,
+    });
+    if (!room) throw new AppException('ROOM_NOT_FOUND');
+    return { room, hubBaseId: await this.hubBaseId() };
+  }
+
+  private async canExposeOwnerIdentityNumber(
+    user: AuthenticatedUser,
+    room: RoomWithRelations,
+    hubBaseId: string | null,
+  ): Promise<boolean> {
+    if (isCommander(user) || isOperationManager(user)) return true;
+    if (isTeamLead(user) && room.teamId && user.teamIds.includes(room.teamId)) return true;
+    if (isSoldier(user) && user.baseId === room.baseId) return true;
+    return isSoldier(user) && Boolean(hubBaseId && user.baseId === hubBaseId && room.baseId === hubBaseId);
+  }
+
   async listTeams(
     user: AuthenticatedUser,
     filter: { baseId?: string; unitId?: string; search?: string },
@@ -111,17 +132,20 @@ export class OrganizationService {
     }));
   }
 
-  async listRooms(query: {
-    page: number;
-    pageSize: number;
-    baseId?: string;
-    unitId?: string;
-    teamId?: string;
-    building?: string;
-    floor?: string;
-    mappingStatus?: MappingStatus;
-    search?: string;
-  }): Promise<PaginatedResult<RoomDto>> {
+  async listRooms(
+    user: AuthenticatedUser,
+    query: {
+      page: number;
+      pageSize: number;
+      baseId?: string;
+      unitId?: string;
+      teamId?: string;
+      building?: string;
+      floor?: string;
+      mappingStatus?: MappingStatus;
+      search?: string;
+    },
+  ): Promise<PaginatedResult<RoomDto>> {
     const where: Prisma.RoomWhereInput = {
       baseId: query.baseId,
       unitId: query.unitId,
@@ -138,6 +162,19 @@ export class OrganizationService {
         : undefined,
     };
 
+    if (!isCommander(user) && !isOperationManager(user)) {
+      if (isTeamLead(user)) {
+        const allowedTeamIds = user.teamIds.length ? user.teamIds : ['00000000-0000-0000-0000-000000000000'];
+        if (query.teamId && !allowedTeamIds.includes(query.teamId)) {
+          where.teamId = { in: allowedTeamIds };
+        } else {
+          where.teamId = { in: allowedTeamIds };
+        }
+      } else if (isSoldier(user)) {
+        where.baseId = user.baseId ?? query.baseId ?? where.baseId;
+      }
+    }
+
     const [total, rooms] = await this.prisma.$transaction([
       this.prisma.room.count({ where }),
       this.prisma.room.findMany({
@@ -151,16 +188,20 @@ export class OrganizationService {
     return paginate(rooms.map(toRoomDto), total, query);
   }
 
-  async getRoom(roomId: string): Promise<RoomDto> {
-    const room = await this.prisma.room.findUnique({ where: { id: roomId }, include: roomInclude });
-    if (!room) throw new AppException('ROOM_NOT_FOUND');
+  async getRoom(user: AuthenticatedUser, roomId: string): Promise<RoomDto> {
+    const { room, hubBaseId } = await this.roomScopeForRoomId(roomId);
+    if (!canViewRoom(user, { baseId: room.baseId, teamId: room.teamId }, hubBaseId)) {
+      throw new AppException('FORBIDDEN_BASE_SCOPE');
+    }
     return toRoomDto(room);
   }
 
   /** מלאי מלא של חדר: ציוד כמותי לפי מק״ט + מחשבים ומסכים לפי ID ובעלים. */
-  async roomInventory(roomId: string): Promise<RoomInventoryDto> {
-    const room = await this.prisma.room.findUnique({ where: { id: roomId }, include: roomInclude });
-    if (!room) throw new AppException('ROOM_NOT_FOUND');
+  async roomInventory(user: AuthenticatedUser, roomId: string): Promise<RoomInventoryDto> {
+    const { room, hubBaseId } = await this.roomScopeForRoomId(roomId);
+    if (!canViewRoom(user, { baseId: room.baseId, teamId: room.teamId }, hubBaseId)) {
+      throw new AppException('FORBIDDEN_BASE_SCOPE');
+    }
 
     const [inventory, assets] = await Promise.all([
       this.prisma.roomInventory.findMany({
@@ -191,7 +232,10 @@ export class OrganizationService {
       ),
     }));
 
-    const assetDtos: AssetDto[] = assets.map(toAssetDto);
+    const exposeOwnerIdentityNumber = await this.canExposeOwnerIdentityNumber(user, room, hubBaseId);
+    const assetDtos: AssetDto[] = assets.map((asset) =>
+      toAssetDto(asset, { hideOwnerIdentityNumber: !exposeOwnerIdentityNumber }),
+    );
     const bulkUnits = bulkLines.reduce((sum, line) => sum + line.mappedQuantity, 0);
 
     return {
@@ -225,18 +269,21 @@ export function toRoomDto(room: RoomWithRelations): RoomDto {
   };
 }
 
-export function toAssetDto(asset: {
-  id: string;
-  assetTag: string;
-  productCatalogItemId?: string;
-  ownerName: string;
-  ownerIdentityNumber: string | null;
-  currentRoomId: string | null;
-  status: string;
-  reservedForTaskId: string | null;
-  product: { sku: string; name: string; category: string };
-  currentRoom?: { displayName: string } | null;
-}): AssetDto {
+export function toAssetDto(
+  asset: {
+    id: string;
+    assetTag: string;
+    productCatalogItemId?: string;
+    ownerName: string;
+    ownerIdentityNumber: string | null;
+    currentRoomId: string | null;
+    status: string;
+    reservedForTaskId: string | null;
+    product: { sku: string; name: string; category: string };
+    currentRoom?: { displayName: string } | null;
+  },
+  options: { hideOwnerIdentityNumber?: boolean } = {},
+): AssetDto {
   return {
     id: asset.id,
     assetTag: asset.assetTag,
@@ -245,7 +292,7 @@ export function toAssetDto(asset: {
     sku: asset.product.sku,
     category: asset.product.category,
     ownerName: asset.ownerName,
-    ownerIdentityNumber: asset.ownerIdentityNumber,
+    ownerIdentityNumber: options.hideOwnerIdentityNumber ? null : asset.ownerIdentityNumber,
     currentRoomId: asset.currentRoomId,
     currentRoomName: asset.currentRoom?.displayName ?? null,
     status: asset.status as AssetDto['status'],

@@ -49,15 +49,18 @@ export class OrganizationController {
 
   @Get('rooms')
   @ApiOperation({ summary: 'חדרים', description: 'חדרי מקור וחדרי יעד עם Pagination וסינון.' })
-  listRooms(@ZodQuery(roomsQuerySchema, 'RoomsQuery') query: z.infer<typeof roomsQuerySchema>) {
-    return this.organization.listRooms(query);
+  listRooms(
+    @CurrentUser() user: AuthenticatedUser,
+    @ZodQuery(roomsQuerySchema, 'RoomsQuery') query: z.infer<typeof roomsQuerySchema>,
+  ) {
+    return this.organization.listRooms(user, query);
   }
 
   @Get('rooms/:id')
   @ApiParam({ name: 'id', description: 'מזהה החדר' })
   @ApiOperation({ summary: 'פרטי חדר' })
-  getRoom(@Param('id', ParseUUIDPipe) roomId: string) {
-    return this.organization.getRoom(roomId);
+  getRoom(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) roomId: string) {
+    return this.organization.getRoom(user, roomId);
   }
 
   @Get('rooms/:id/inventory')
@@ -66,8 +69,8 @@ export class OrganizationController {
     summary: 'מלאי החדר',
     description: 'ציוד כמותי לפי מק״ט וכמות, ומחשבים ומסכים לפי מזהה ובעלים.',
   })
-  roomInventory(@Param('id', ParseUUIDPipe) roomId: string) {
-    return this.organization.roomInventory(roomId);
+  roomInventory(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) roomId: string) {
+    return this.organization.roomInventory(user, roomId);
   }
 
   @Get('rooms/:id/panel')
@@ -76,16 +79,17 @@ export class OrganizationController {
     summary: 'פאנל חדר במפה',
     description: 'כל המידע שמוצג בלחיצה על חדר במפה: מלאי, משימות פעילות ואריזות.',
   })
-  roomPanel(@Param('id', ParseUUIDPipe) roomId: string) {
-    return this.floorMaps.roomPanel(roomId);
+  roomPanel(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) roomId: string) {
+    return this.floorMaps.roomPanel(user, roomId);
   }
 
   @Get('floor-maps')
   @ApiOperation({ summary: 'מפות קומה', description: 'רשימת הקומות של בניין היעד.' })
   listFloorMaps(
+    @CurrentUser() user: AuthenticatedUser,
     @ZodQuery(floorMapsQuerySchema, 'FloorMapsQuery') query: z.infer<typeof floorMapsQuerySchema>,
   ) {
-    return this.floorMaps.listFloorMaps(query);
+    return this.floorMaps.listFloorMaps(user, query);
   }
 
   @Get('floor-maps/search')
@@ -94,10 +98,11 @@ export class OrganizationController {
     description: 'חיפוש לפי מספר חדר, צוות, בעלים, מזהה פריט או מק״ט.',
   })
   searchFloorMaps(
+    @CurrentUser() user: AuthenticatedUser,
     @ZodQuery(roomMapSearchQuerySchema, 'RoomMapSearchQuery')
     query: z.infer<typeof roomMapSearchQuerySchema>,
   ) {
-    return this.floorMaps.searchRoomMap(query);
+    return this.floorMaps.searchRoomMap(user, query);
   }
 
   @Get('floor-maps/:id')
@@ -106,15 +111,15 @@ export class OrganizationController {
     summary: 'מפת קומה',
     description: 'צורות החדרים והמסדרון, עם סיכום ציוד ומצב עדכני לכל חדר.',
   })
-  floorMap(@Param('id', ParseUUIDPipe) floorMapId: string) {
-    return this.floorMaps.floorMapDetails(floorMapId);
+  floorMap(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) floorMapId: string) {
+    return this.floorMaps.floorMapDetails(user, floorMapId);
   }
 
   @Get('floor-maps/:id/rooms')
   @ApiParam({ name: 'id', description: 'מזהה מפת הקומה' })
   @ApiOperation({ summary: 'חדרי הקומה' })
-  async floorMapRooms(@Param('id', ParseUUIDPipe) floorMapId: string) {
-    const details = await this.floorMaps.floorMapDetails(floorMapId);
+  async floorMapRooms(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) floorMapId: string) {
+    const details = await this.floorMaps.floorMapDetails(user, floorMapId);
     return details.rooms;
   }
 }

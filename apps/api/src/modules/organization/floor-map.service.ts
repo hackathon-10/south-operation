@@ -10,12 +10,15 @@ import {
   RoomMapSearchHitDto,
   RoomMapState,
   RoomPanelDto,
+  UserRole,
 } from '@south/shared';
 import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { OrganizationService, toRoomDto } from './organization.service';
 import { toPackageSummary, packageSummaryInclude } from '../packages/package.mapper';
 import { toTaskSummary, taskSummaryInclude } from '../packing-tasks/packing-task.mapper';
+import type { AuthenticatedUser } from '../auth/auth.types';
+import { canViewRoom, isCommander, isOperationManager, isSoldier, isTeamLead } from '../../common/authz/access-control';
 
 const ACTIVE_TASK_STATUSES: PackingTaskStatus[] = [
   PackingTaskStatus.ASSIGNED,
@@ -39,15 +42,29 @@ export class FloorMapService {
     private readonly organization: OrganizationService,
   ) {}
 
-  async listFloorMaps(filter: { baseId?: string; building?: string }): Promise<FloorMapSummaryDto[]> {
+  async listFloorMaps(
+    user: AuthenticatedUser,
+    filter: { baseId?: string; building?: string },
+  ): Promise<FloorMapSummaryDto[]> {
+    const effectiveBaseId =
+      isCommander(user) || isOperationManager(user)
+        ? filter.baseId
+        : user.baseId ?? filter.baseId;
+
     const maps = await this.prisma.floorMap.findMany({
-      where: { baseId: filter.baseId, building: filter.building },
+      where: {
+        baseId: effectiveBaseId,
+        building: filter.building,
+        ...(isTeamLead(user) || isSoldier(user)) && !isCommander(user) && !isOperationManager(user)
+          ? { baseId: user.baseId ?? filter.baseId }
+          : {},
+      },
       orderBy: [{ building: 'asc' }, { floorNumber: 'asc' }],
     });
     return maps.map(toFloorMapSummary);
   }
 
-  async floorMapDetails(floorMapId: string): Promise<FloorMapDetailsDto> {
+  async floorMapDetails(user: AuthenticatedUser, floorMapId: string): Promise<FloorMapDetailsDto> {
     const map = await this.prisma.floorMap.findUnique({
       where: { id: floorMapId },
       include: {
@@ -63,7 +80,22 @@ export class FloorMapService {
     });
     if (!map) throw new AppException('FLOOR_MAP_NOT_FOUND');
 
-    const roomIds = map.shapes.map((shape) => shape.roomId);
+    const hubBaseId = await this.organization.hubBaseId();
+    const allowedRoomIds = map.shapes
+      .filter((shape) => canViewRoom(user, { baseId: shape.room.baseId, teamId: shape.room.teamId }, hubBaseId))
+      .map((shape) => shape.roomId);
+    if (!isCommander(user) && !isOperationManager(user) && allowedRoomIds.length === 0) {
+      throw new AppException('FORBIDDEN_BASE_SCOPE');
+    }
+
+    const roomIds = map.shapes
+      .filter(
+        (shape) =>
+          isCommander(user) ||
+          isOperationManager(user) ||
+          allowedRoomIds.includes(shape.roomId),
+      )
+      .map((shape) => shape.roomId);
     const aggregates = await this.roomAggregates(roomIds);
 
     const rooms: FloorMapRoomShapeDto[] = map.shapes.map((shape) => {
@@ -101,14 +133,20 @@ export class FloorMapService {
    * חיפוש חוצה-מפה: מספר חדר, שם חדר, צוות, בעלים, assetTag או מק״ט.
    * התוצאה מפנה לקומה הנכונה ומדגישה את החדר.
    */
-  async searchRoomMap(params: {
-    baseId?: string;
-    building?: string;
-    query: string;
-  }): Promise<RoomMapSearchHitDto[]> {
+  async searchRoomMap(
+    user: AuthenticatedUser,
+    params: {
+      baseId?: string;
+      building?: string;
+      query: string;
+    },
+  ): Promise<RoomMapSearchHitDto[]> {
     const search = params.query.trim();
     const roomFilter: Prisma.RoomWhereInput = {
-      baseId: params.baseId,
+      baseId:
+        isCommander(user) || isOperationManager(user)
+          ? params.baseId
+          : params.baseId ?? (isTeamLead(user) || isSoldier(user) ? user.baseId ?? undefined : undefined),
       building: params.building,
       floorMapId: { not: null },
       isActive: true,
@@ -209,8 +247,7 @@ export class FloorMapService {
   }
 
   /** פאנל פרטי חדר - נפתח בלחיצה על חדר במפה. */
-  async roomPanel(roomId: string): Promise<RoomPanelDto> {
-    const inventory = await this.organization.roomInventory(roomId);
+  async roomPanel(user: AuthenticatedUser, roomId: string): Promise<RoomPanelDto> {
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       include: {
@@ -219,6 +256,11 @@ export class FloorMapService {
       },
     });
     if (!room) throw new AppException('ROOM_NOT_FOUND');
+    const hubBaseId = await this.organization.hubBaseId();
+    if (!canViewRoom(user, { baseId: room.baseId, teamId: room.teamId }, hubBaseId)) {
+      throw new AppException('FORBIDDEN_BASE_SCOPE');
+    }
+    const inventory = await this.organization.roomInventory(user, roomId);
 
     const [tasks, incoming, arrived] = await Promise.all([
       this.prisma.packingTask.findMany({

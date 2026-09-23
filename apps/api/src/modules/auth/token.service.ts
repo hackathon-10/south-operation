@@ -37,6 +37,19 @@ export class TokenService {
     sessionId: string;
     accessExpiresInSeconds: number;
   }> {
+    return this.issueTokensInTransaction(this.prisma, userId, role);
+  }
+
+  private async issueTokensInTransaction(
+    tx: any,
+    userId: string,
+    role: UserRole,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    sessionId: string;
+    accessExpiresInSeconds: number;
+  }> {
     const sessionId = randomUUID();
 
     const accessToken = await this.jwt.signAsync(
@@ -51,7 +64,7 @@ export class TokenService {
 
     const decoded = this.jwt.decode(refreshToken) as { exp: number };
 
-    await this.prisma.refreshSession.create({
+    await tx.refreshSession.create({
       data: {
         id: sessionId,
         userId,
@@ -99,41 +112,58 @@ export class TokenService {
       throw new AppException('INVALID_REFRESH_TOKEN');
     }
 
-    const session = await this.prisma.refreshSession.findUnique({
-      where: { id: payload.sid },
-      include: { user: { select: { id: true, role: true, isActive: true } } },
-    });
-
     const tokenHash = this.hashToken(refreshToken);
-    if (
-      !session ||
-      session.revokedAt ||
-      session.tokenHash !== tokenHash ||
-      session.expiresAt.getTime() < Date.now()
-    ) {
-      // אם הסשן קיים אבל ה-hash לא תואם, ייתכן שמדובר ב-Token גנוב: מבטלים את כל הסשנים.
-      if (session && session.tokenHash !== tokenHash) {
-        await this.revokeAllUserSessions(session.userId);
+
+    return this.prisma.$transaction(async (tx) => {
+      const session = await tx.refreshSession.findUnique({
+        where: { id: payload.sid },
+        include: { user: { select: { id: true, role: true, isActive: true } } },
+      });
+
+      if (!session || session.revokedAt || session.tokenHash !== tokenHash) {
+        if (session && session.tokenHash !== tokenHash) {
+          await tx.refreshSession.updateMany({
+            where: { userId: session.userId, revokedAt: null },
+            data: { revokedAt: new Date() },
+          });
+        }
+        throw new AppException('INVALID_REFRESH_TOKEN');
       }
-      throw new AppException('INVALID_REFRESH_TOKEN');
-    }
 
-    if (!session.user.isActive) {
-      throw new AppException('ACCOUNT_DISABLED');
-    }
+      if (session.expiresAt.getTime() < Date.now()) {
+        await tx.refreshSession.updateMany({
+          where: { id: session.id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+        throw new AppException('INVALID_REFRESH_TOKEN');
+      }
 
-    await this.prisma.refreshSession.update({
-      where: { id: session.id },
-      data: { revokedAt: new Date() },
+      if (!session.user.isActive) {
+        throw new AppException('ACCOUNT_DISABLED');
+      }
+
+      const revoked = await tx.refreshSession.updateMany({
+        where: {
+          id: session.id,
+          tokenHash,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        data: { revokedAt: new Date() },
+      });
+
+      if (revoked.count !== 1) {
+        throw new AppException('INVALID_REFRESH_TOKEN');
+      }
+
+      const issued = await this.issueTokensInTransaction(tx, session.userId, session.user.role as UserRole);
+      return {
+        accessToken: issued.accessToken,
+        refreshToken: issued.refreshToken,
+        userId: session.userId,
+        accessExpiresInSeconds: issued.accessExpiresInSeconds,
+      };
     });
-
-    const issued = await this.issueTokens(session.userId, session.user.role as UserRole);
-    return {
-      accessToken: issued.accessToken,
-      refreshToken: issued.refreshToken,
-      userId: session.userId,
-      accessExpiresInSeconds: issued.accessExpiresInSeconds,
-    };
   }
 
   async revokeSession(sessionId: string): Promise<void> {

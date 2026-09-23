@@ -121,6 +121,22 @@ export function canViewMission(
   return isHubUser(user, hubBaseId);
 }
 
+export function canViewRoom(
+  user: AuthenticatedUser,
+  scope: { baseId: string | null; teamId: string | null },
+  hubBaseId: string | null,
+): boolean {
+  if (seesEverything(user)) return true;
+  if (isTeamLead(user)) {
+    return Boolean(scope.teamId && user.teamIds.includes(scope.teamId));
+  }
+  if (isSoldier(user)) {
+    if (user.baseId && scope.baseId && user.baseId === scope.baseId) return true;
+    return Boolean(user.baseId && hubBaseId && user.baseId === hubBaseId && scope.baseId === hubBaseId);
+  }
+  return false;
+}
+
 /** ביצוע שליחות בשטח - רק החייל המבצע. */
 export function canExecuteMission(user: AuthenticatedUser, scope: MissionScope): boolean {
   return isSoldier(user) && scope.assignedSoldierId === user.id;

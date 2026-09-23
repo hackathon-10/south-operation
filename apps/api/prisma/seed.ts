@@ -116,6 +116,10 @@ export async function runSeed(client: PrismaClient): Promise<void> {
   const { password, generated } = await resolveDemoPassword();
   const passwordHash = await hash(password);
 
+  if (generated) {
+    console.log('הסיסמה הדמו נוצרת באופן אוטומטי; היא תוצג פעם אחת בלבד, ומנוהלת כסוד שונה מהסיסמה שסופקה על ידי המפעיל.');
+  }
+
   console.log('מנקה נתונים קיימים...');
   await ensureSequences();
   await wipe();
@@ -1140,9 +1144,8 @@ export async function runSeed(client: PrismaClient): Promise<void> {
   for (const user of DEMO_USERS) {
     console.log(`  ${user.email.padEnd(28)} ${user.role.padEnd(20)} ${user.description}`);
   }
-  console.log(`\nסיסמת הדמו: ${password}`);
   if (generated) {
-    console.log('הסיסמה נוצרה אקראית ומוצגת פעם אחת בלבד. שמרו אותה במקום בטוח.');
+    console.log('\nסיסמת הדמו נוצלה אוטומטית על ידי ה-Seed; לא מופיעה ב-stdout כדי למנוע חשיפה של סוד.');
   }
   console.log('\nכל הנתונים סינתטיים ואינם מייצגים מידע אמיתי.\n');
 

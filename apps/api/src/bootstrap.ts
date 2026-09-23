@@ -118,9 +118,7 @@ export function configureApp(app: INestApplication): AppConfig {
   }
 
   if (config.ENABLE_DEMO_LOGIN && config.isProduction) {
-    new Logger('Bootstrap').warn(
-      'ENABLE_DEMO_LOGIN פעיל בסביבת פרודקשן. מסך בחירת משתמשי הדמו יהיה זמין.',
-    );
+    throw new Error('ENABLE_DEMO_LOGIN must be false in production');
   }
 
   return config;
