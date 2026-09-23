@@ -13,7 +13,7 @@ module.exports = async (): Promise<void> => {
   process.env.JWT_ACCESS_TTL = '15m';
   process.env.JWT_REFRESH_TTL = '7d';
   process.env.CORS_ORIGINS = 'http://localhost:5173';
-  process.env.PUBLIC_WEB_URL = 'http://localhost:5173';
+  process.env.WEB_APP_URL = 'http://localhost:5173';
   process.env.ENABLE_DEMO_LOGIN = 'false';
   process.env.SWAGGER_ENABLED = 'false';
 };

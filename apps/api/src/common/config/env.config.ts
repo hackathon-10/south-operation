@@ -31,7 +31,14 @@ export const envSchema = z
 
     /** רשימת Origins מורשים ל-CORS, מופרדים בפסיק. */
     CORS_ORIGINS: z.string().default('http://localhost:5173'),
-    PUBLIC_WEB_URL: z.string().url().default('http://localhost:5173'),
+    /**
+     * כתובת ה-Frontend, משמשת לבניית ה-URL שמוטמע ב-QR של האריזה.
+     * שם המשתנה בכוונה אינו מתחיל ב-PUBLIC_: Vercel מזהה תחיליות של משתנים
+     * "ציבוריים" של פריימוורקים (PUBLIC_/VITE_/NEXT_PUBLIC_) ואוכף עליהן
+     * כללי visibility משלה, מה שמנע לערוך את המשתנה בדשבורד. זהו ערך צד-שרת
+     * בלבד ואינו נחשף ל-Frontend.
+     */
+    WEB_APP_URL: z.string().url().default('http://localhost:5173'),
 
     /** מסך בחירת משתמשי דמו. לפיתוח והדגמה בלבד. */
     ENABLE_DEMO_LOGIN: booleanFromEnv,
