@@ -82,7 +82,13 @@ export function App() {
         <Route
           path="/missions"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.LOGISTICS_SOLDIER]}>
+            <Protected
+              roles={[
+                UserRole.LOGISTICS_COMMANDER,
+                UserRole.OPERATION_COMMANDER,
+                UserRole.LOGISTICS_SOLDIER,
+              ]}
+            >
               <MissionsPage />
             </Protected>
           }
@@ -98,7 +104,13 @@ export function App() {
         <Route
           path="/missions/:missionId"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.LOGISTICS_SOLDIER]}>
+            <Protected
+              roles={[
+                UserRole.LOGISTICS_COMMANDER,
+                UserRole.OPERATION_COMMANDER,
+                UserRole.LOGISTICS_SOLDIER,
+              ]}
+            >
               <MissionDetailPage />
             </Protected>
           }
@@ -107,7 +119,7 @@ export function App() {
         <Route
           path="/join-requests"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER]}>
+            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER]}>
               <JoinRequestsPage />
             </Protected>
           }
@@ -120,7 +132,7 @@ export function App() {
         <Route
           path="/audit"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER]}>
+            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER]}>
               <AuditPage />
             </Protected>
           }

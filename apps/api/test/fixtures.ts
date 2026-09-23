@@ -10,6 +10,7 @@ export interface Fixtures {
   teamDevId: string;
   teamOtherId: string;
   commanderId: string;
+  operationCommanderId: string;
   soldierGdnId: string;
   soldierTzrId: string;
   soldierHubId: string;
@@ -87,6 +88,16 @@ export async function seedFixtures(prisma: PrismaClient): Promise<Fixtures> {
       email: 'commander@test.demo',
       passwordHash,
       role: 'LOGISTICS_COMMANDER',
+      baseId: hub.id,
+    },
+  });
+  const operationCommander = await prisma.user.create({
+    data: {
+      identityNumber: '1000009',
+      fullName: 'מפקד מבצע',
+      email: 'operation@test.demo',
+      passwordHash,
+      role: 'OPERATION_COMMANDER',
       baseId: hub.id,
     },
   });
@@ -265,6 +276,7 @@ export async function seedFixtures(prisma: PrismaClient): Promise<Fixtures> {
     teamDevId: teamDev.id,
     teamOtherId: teamOther.id,
     commanderId: commander.id,
+    operationCommanderId: operationCommander.id,
     soldierGdnId: soldierGdn.id,
     soldierTzrId: soldierTzr.id,
     soldierHubId: soldierHub.id,

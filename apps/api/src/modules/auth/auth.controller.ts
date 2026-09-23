@@ -1,6 +1,11 @@
 import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import {
+  AUTH_RATE_LIMIT,
+  AUTH_RATE_TTL_MS,
+  REFRESH_RATE_LIMIT,
+} from '../../common/http/rate-limits';
 import { LoginInput, loginSchema } from '@south/shared';
 import type { Request, Response } from 'express';
 import { APP_CONFIG, AppConfig } from '../../common/config/env.config';
@@ -24,7 +29,7 @@ export class AuthController {
    * Reason: הגבלת קצב הדוקה יותר מברירת המחדל בנתיב ההתחברות.
    */
   @Public()
-  @Throttle({ auth: { limit: 10, ttl: 900_000 } })
+  @Throttle({ auth: { limit: AUTH_RATE_LIMIT, ttl: AUTH_RATE_TTL_MS } })
   @Post('login')
   @HttpCode(200)
   @ApiOperation({
@@ -48,7 +53,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ auth: { limit: 60, ttl: 900_000 } })
+  @Throttle({ auth: { limit: REFRESH_RATE_LIMIT, ttl: AUTH_RATE_TTL_MS } })
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({

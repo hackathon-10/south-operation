@@ -16,4 +16,7 @@ module.exports = async (): Promise<void> => {
   process.env.PUBLIC_WEB_URL = 'http://localhost:5173';
   process.env.ENABLE_DEMO_LOGIN = 'false';
   process.env.SWAGGER_ENABLED = 'false';
+  // חבילת הבדיקות מתחברת בשם כל התפקידים ובודקת ניסיונות כושלים, ולכן חוצה
+  // את מגבלת ההתחברות מעצם היותה חבילת בדיקות. בפרודקשן המגבלה נשארת 10.
+  process.env.AUTH_RATE_LIMIT = '1000';
 };

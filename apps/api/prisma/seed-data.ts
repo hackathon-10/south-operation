@@ -245,6 +245,15 @@ export const DEMO_USERS = [
     description: 'מפקדת הלוגיסטיקה - רואה את כל המבצע',
   },
   {
+    identityNumber: '9000007',
+    fullName: 'אל״ם יואב ברנע',
+    email: 'operation@south.demo',
+    role: 'OPERATION_COMMANDER',
+    baseCode: 'KT',
+    teamCode: null,
+    description: 'מפקד המבצע - תמונת מאקרו על כל הבסיסים והיחידות',
+  },
+  {
     identityNumber: '9000002',
     fullName: 'רס״ל אלה מאיר',
     email: 'soldier.gdn@south.demo',

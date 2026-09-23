@@ -5,6 +5,9 @@ import {
   CommanderDashboardDto,
   JoinRequestStatus,
   MissionStatus,
+  OperationBaseRowDto,
+  OperationDashboardDto,
+  OperationRowDto,
   PACKAGE_STATUSES,
   PACKAGE_STATUS_LABEL,
   PackageStatus,
@@ -16,6 +19,7 @@ import {
   TeamLeadDashboardDto,
 } from '@south/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { type Health, evaluateHealth, worstHealth } from './operation-health';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { joinRequestInclude, missionSummaryInclude, toJoinRequestDto, toMissionSummary } from '../missions/mission.mapper';
 import { packageSummaryInclude, toPackageSummary } from '../packages/package.mapper';
@@ -32,6 +36,10 @@ const MOVED_ASSET_STATUSES: AssetStatus[] = [
   AssetStatus.RECEIVED,
   AssetStatus.DELIVERED,
 ];
+
+/** אחוז שלם, ובלי חלוקה באפס. */
+const percent = (part: number, total: number): number =>
+  total === 0 ? 0 : Math.round((part / total) * 100);
 
 @Injectable()
 export class DashboardService {
@@ -207,6 +215,145 @@ export class DashboardService {
       myMissions: myMissions.map(toMissionSummary),
       joinableMissions: joinable.map(toMissionSummary),
       pendingJoinRequests: requests.map(toJoinRequestDto),
+    };
+  }
+
+  /**
+   * תמונת המאקרו של מפקד המבצע (§10.6).
+   *
+   * מפקד המבצע אינו מתעניין בשליחות מסוימת אלא במצב הכולל, ולכן כל הנתונים
+   * כאן מצטברים לרמת בסיס ויחידה ארגונית בלבד - לא לרמת צוות ולא לרמת אריזה.
+   *
+   * השאילתות צוברות בשרת. הרשומות הבודדות שנטענות הן רק אלה שנדרשות לכללי
+   * החיווי (`operation-health.ts`), והן מסוננות מראש לסטטוסים הרלוונטיים.
+   */
+  async operation(): Promise<OperationDashboardDto> {
+    const now = new Date();
+
+    const [bases, packages, tasks, missionsInTransit, joinRequests] = await Promise.all([
+      this.prisma.base.findMany({
+        orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          units: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
+        },
+      }),
+      // כל אריזה עם היחידה שאליה היא שייכת, דרך הצוות שלה.
+      this.prisma.package.findMany({
+        select: {
+          status: true,
+          sourceRoom: { select: { baseId: true } },
+          missionPackage: { select: { id: true } },
+          team: { select: { unitId: true } },
+          statusEvents: {
+            where: { toStatus: PackageStatus.READY_FOR_SHIPMENT },
+            select: { createdAt: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+      }),
+      this.prisma.packingTask.findMany({
+        where: { status: { in: [PackingTaskStatus.ASSIGNED, PackingTaskStatus.IN_PROGRESS] } },
+        select: {
+          status: true,
+          priority: true,
+          sourceRoom: { select: { baseId: true } },
+          team: { select: { unitId: true } },
+        },
+      }),
+      this.prisma.transportMission.count({ where: { status: MissionStatus.IN_TRANSIT } }),
+      this.prisma.missionJoinRequest.findMany({
+        where: { status: JoinRequestStatus.PENDING },
+        include: joinRequestInclude,
+        relationLoadStrategy: 'join',
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    /** בונה שורת דשבורד אחת מתוך האריזות והמשימות ששויכו אליה. */
+    const buildRow = (
+      id: string,
+      name: string,
+      rowPackages: typeof packages,
+      rowTasks: typeof tasks,
+    ): OperationRowDto => {
+      const delivered = rowPackages.filter(
+        (pkg) => pkg.status === PackageStatus.DELIVERED_TO_ROOM,
+      ).length;
+      const openTasks = rowTasks.length;
+
+      const { health, reasons } = evaluateHealth(
+        {
+          tasks: rowTasks.map((task) => ({ status: task.status, priority: task.priority })),
+          readyPackages: rowPackages
+            .filter(
+              (pkg) =>
+                pkg.status === PackageStatus.READY_FOR_SHIPMENT && pkg.statusEvents.length > 0,
+            )
+            .map((pkg) => ({
+              readySince: pkg.statusEvents[0].createdAt,
+              hasMission: pkg.missionPackage !== null,
+            })),
+        },
+        now,
+      );
+
+      return {
+        id,
+        name,
+        totalPackages: rowPackages.length,
+        deliveredPackages: delivered,
+        percentDelivered: percent(delivered, rowPackages.length),
+        openTasks,
+        health,
+        reasons,
+      };
+    };
+
+    const baseRows: OperationBaseRowDto[] = bases.map((base) => {
+      const basePackages = packages.filter((pkg) => pkg.sourceRoom?.baseId === base.id);
+      const baseTasks = tasks.filter((task) => task.sourceRoom?.baseId === base.id);
+
+      const units: OperationRowDto[] = base.units.map((unit) =>
+        buildRow(
+          unit.id,
+          unit.name,
+          basePackages.filter((pkg) => pkg.team?.unitId === unit.id),
+          baseTasks.filter((task) => task.team?.unitId === unit.id),
+        ),
+      );
+
+      const row = buildRow(base.id, base.name, basePackages, baseTasks);
+
+      return {
+        ...row,
+        baseCode: base.code,
+        // חיווי הבסיס הוא החמור מבין הבסיס עצמו ויחידותיו, כדי שכרטיס מקופל
+        // לא יסתיר יחידה אדומה.
+        health: worstHealth([row.health, ...units.map((unit) => unit.health)] as Health[]),
+        units,
+      };
+    });
+
+    const packagesTotal = packages.length;
+    const packagesDelivered = packages.filter(
+      (pkg) => pkg.status === PackageStatus.DELIVERED_TO_ROOM,
+    ).length;
+
+    return {
+      headline: {
+        overallProgressPercent: percent(packagesDelivered, packagesTotal),
+        packagesDelivered,
+        packagesTotal,
+        missionsInTransit,
+        basesAtRisk: baseRows.filter((base) => base.health === 'RED').length,
+      },
+      bases: baseRows,
+      pendingJoinRequests: joinRequests.map(toJoinRequestDto),
+      generatedAt: now.toISOString(),
     };
   }
 

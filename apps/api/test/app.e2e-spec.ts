@@ -21,6 +21,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
   const api = (path: string) => `/${API_PREFIX}${path}`;
 
   let commanderToken: string;
+  let operationCommanderToken: string;
   let soldierGdnToken: string;
   let soldierTzrToken: string;
   let soldierHubToken: string;
@@ -60,6 +61,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
     await app.init();
 
     commanderToken = await login('commander@test.demo');
+    operationCommanderToken = await login('operation@test.demo');
     soldierGdnToken = await login('soldier.gdn@test.demo');
     soldierTzrToken = await login('soldier.tzr@test.demo');
     soldierHubToken = await login('soldier.hub@test.demo');
@@ -737,6 +739,39 @@ describe('המעבר דרומה - זרימה מלאה', () => {
       expect(response.body.baseProgress.length).toBeGreaterThanOrEqual(3);
       expect(response.body.packages.byStatus).toHaveLength(7);
       expect(response.body.overallProgressPercent).toBeGreaterThanOrEqual(0);
+    });
+
+    it('Dashboard מפקד המבצע מחזיר תמונת מאקרו של בסיסים ויחידות', async () => {
+      const response = await request(app.getHttpServer())
+        .get(api('/dashboard/operation'))
+        .set(auth(operationCommanderToken))
+        .expect(200);
+
+      expect(response.body.headline.packagesTotal).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.bases)).toBe(true);
+      expect(response.body.bases.length).toBeGreaterThanOrEqual(3);
+      // כל בסיס נושא חיווי ומערך יחידות, גם אם ריק.
+      for (const base of response.body.bases) {
+        expect(['GREEN', 'AMBER', 'RED']).toContain(base.health);
+        expect(Array.isArray(base.units)).toBe(true);
+      }
+      expect(response.body).toHaveProperty('generatedAt');
+    });
+
+    it('Dashboard המאקרו חסום לכל תפקיד אחר', async () => {
+      for (const token of [commanderToken, soldierGdnToken, teamLeadToken]) {
+        await request(app.getHttpServer())
+          .get(api('/dashboard/operation'))
+          .set(auth(token))
+          .expect(403);
+      }
+    });
+
+    it('מפקד המבצע חסום מנתיבי כתיבה על אריזות', async () => {
+      await request(app.getHttpServer())
+        .get(api('/dashboard/commander'))
+        .set(auth(operationCommanderToken))
+        .expect(403);
     });
 
     it('Dashboard החייל מחזיר את המשימות שלו בלבד', async () => {

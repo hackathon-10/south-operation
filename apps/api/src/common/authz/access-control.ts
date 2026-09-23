@@ -35,6 +35,16 @@ export const isCommander = (user: AuthenticatedUser): boolean =>
 export const isSoldier = (user: AuthenticatedUser): boolean =>
   user.role === UserRole.LOGISTICS_SOLDIER;
 export const isTeamLead = (user: AuthenticatedUser): boolean => user.role === UserRole.TEAM_LEAD;
+/**
+ * מפקד מבצע - תפקיד מאקרו. רואה את כל המבצע, ואינו מבצע בו דבר.
+ * הפעולה היחידה שלו במערכת היא אישור בקשת הצטרפות לשליחות.
+ */
+export const isOperationCommander = (user: AuthenticatedUser): boolean =>
+  user.role === UserRole.OPERATION_COMMANDER;
+
+/** מי שרשאי לצפות בכל המבצע ללא סינון: מפקד לוגיסטיקה ומפקד מבצע. */
+const seesEverything = (user: AuthenticatedUser): boolean =>
+  isCommander(user) || isOperationCommander(user);
 
 /** האם המשתמש מוצב בקריית התקשוב (בסיס היעד). */
 export function isHubUser(user: AuthenticatedUser, hubBaseId: string | null): boolean {
@@ -47,7 +57,7 @@ export function canViewPackage(
   scope: PackageScope,
   hubBaseId: string | null,
 ): boolean {
-  if (isCommander(user)) return true;
+  if (seesEverything(user)) return true;
 
   if (isTeamLead(user)) {
     // ראש צוות רואה רק אריזות של הצוותים שבתחום ההרשאה שלו.
@@ -65,8 +75,10 @@ export function canViewPackage(
   return false;
 }
 
-/** עריכת תכולת אריזה - רק החייל שהמשימה שויכה אליו, או מפקד. */
+/** עריכת תכולת אריזה - רק החייל שהמשימה שויכה אליו, או מפקד לוגיסטיקה. */
 export function canEditPackageContent(user: AuthenticatedUser, scope: PackageScope): boolean {
+  // מפקד מבצע אינו נוגע בתכולה - הוא צופה בלבד.
+  if (isOperationCommander(user)) return false;
   if (isCommander(user)) return true;
   return isSoldier(user) && scope.taskAssignedSoldierId === user.id;
 }
@@ -77,6 +89,8 @@ export function canHandleAtHub(
   scope: PackageScope,
   hubBaseId: string | null,
 ): boolean {
+  // מפקד מבצע אינו קולט ואינו מפזר, גם כשהוא מוצב בקריית התקשוב.
+  if (isOperationCommander(user)) return false;
   if (isCommander(user)) return true;
   if (!isSoldier(user)) return false;
   if (scope.missionAssignedSoldierId === user.id) return true;
@@ -84,7 +98,7 @@ export function canHandleAtHub(
 }
 
 export function canViewTask(user: AuthenticatedUser, scope: TaskScope): boolean {
-  if (isCommander(user)) return true;
+  if (seesEverything(user)) return true;
   if (isTeamLead(user)) return user.teamIds.includes(scope.teamId);
   return isSoldier(user) && scope.assignedSoldierId === user.id;
 }
@@ -99,7 +113,7 @@ export function canViewMission(
   scope: MissionScope,
   hubBaseId: string | null,
 ): boolean {
-  if (isCommander(user)) return true;
+  if (seesEverything(user)) return true;
   if (!isSoldier(user)) return false;
   if (scope.assignedSoldierId === user.id) return true;
   // חייל רואה שליחויות שעוברות בבסיס שלו, כדי שיוכל לבקש הצטרפות.
@@ -117,7 +131,7 @@ export function canViewSecuredTransportNotes(
   user: AuthenticatedUser,
   scope: MissionScope,
 ): boolean {
-  if (isCommander(user)) return true;
+  if (seesEverything(user)) return true;
   return isSoldier(user) && scope.assignedSoldierId === user.id;
 }
 

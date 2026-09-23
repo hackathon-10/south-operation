@@ -28,7 +28,7 @@ export class JoinRequestsController {
 
   @Post(':id/approve')
   @HttpCode(200)
-  @Roles(UserRole.LOGISTICS_COMMANDER)
+  @Roles(UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER)
   @ApiParam({ name: 'id', description: 'מזהה הבקשה' })
   @ApiOperation({
     summary: 'אישור בקשה',
@@ -45,7 +45,7 @@ export class JoinRequestsController {
 
   @Post(':id/reject')
   @HttpCode(200)
-  @Roles(UserRole.LOGISTICS_COMMANDER)
+  @Roles(UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER)
   @ApiParam({ name: 'id', description: 'מזהה הבקשה' })
   @ApiOperation({ summary: 'דחיית בקשה' })
   reject(

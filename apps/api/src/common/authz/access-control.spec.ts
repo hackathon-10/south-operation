@@ -12,6 +12,7 @@ import {
   canViewPackage,
   canViewSecuredTransportNotes,
   canViewTask,
+  isOperationCommander,
 } from './access-control';
 
 const HUB = 'base-hub';
@@ -57,6 +58,16 @@ const teamLead: AuthenticatedUser = {
   baseId: GDN,
   teamId: 'team-dev',
   teamIds: ['team-dev'],
+};
+
+const operationCommander: AuthenticatedUser = {
+  id: 'op-commander-1',
+  email: 'op@demo',
+  fullName: 'מפקד מבצע',
+  role: UserRole.OPERATION_COMMANDER,
+  baseId: HUB,
+  teamId: null,
+  teamIds: [],
 };
 
 const scope: PackageScope = {
@@ -163,5 +174,59 @@ describe('בקרת גישה לשליחויות', () => {
 
   it('ראש צוות אינו רואה שליחויות כלל', () => {
     expect(canViewMission(teamLead, missionScope, HUB)).toBe(false);
+  });
+});
+
+/**
+ * מפקד המבצע הוא תפקיד מאקרו: רואה הכול, אינו נוגע בכלום.
+ *
+ * הבדיקות כאן אינן "עוד מקרה" - הן הרשת שמונעת את התקלה השקטה שבה תפקיד חדש
+ * נופל דרך ברירת המחדל של כל פונקציית הרשאה ומקבל אפס גישה, או גרוע מכך,
+ * מקבל גישת כתיבה שלא התכוונו לתת לו.
+ */
+describe('בקרת גישה למפקד מבצע', () => {
+  const taskScope = { teamId: 'team-dev', assignedSoldierId: 'soldier-gdn', sourceBaseId: GDN };
+  const missionScope = {
+    assignedSoldierId: 'soldier-gdn',
+    createdById: commander.id,
+    stopBaseIds: [HUB, GDN],
+  };
+
+  it('מזוהה כמפקד מבצע ואינו מזוהה כמפקד לוגיסטיקה', () => {
+    expect(isOperationCommander(operationCommander)).toBe(true);
+    expect(isOperationCommander(commander)).toBe(false);
+  });
+
+  it('רואה כל אריזה, בכל בסיס ובכל צוות', () => {
+    expect(canViewPackage(operationCommander, scope, HUB)).toBe(true);
+    expect(canViewPackage(operationCommander, { ...scope, teamId: 'team-זר' }, HUB)).toBe(true);
+    expect(canViewPackage(operationCommander, { ...scope, sourceBaseId: 'base-זר' }, HUB)).toBe(
+      true,
+    );
+  });
+
+  it('רואה כל משימה וכל שליחות', () => {
+    expect(canViewTask(operationCommander, taskScope)).toBe(true);
+    expect(canViewMission(operationCommander, missionScope, HUB)).toBe(true);
+    expect(canViewMission(operationCommander, { ...missionScope, stopBaseIds: [] }, HUB)).toBe(
+      true,
+    );
+  });
+
+  it('רואה הנחיות נסיעה מאובטחת - הוא המפקד הבכיר במבצע', () => {
+    expect(canViewSecuredTransportNotes(operationCommander, missionScope)).toBe(true);
+  });
+
+  it('אינו עורך תכולת אריזה', () => {
+    expect(canEditPackageContent(operationCommander, scope)).toBe(false);
+  });
+
+  it('אינו מבצע משימה ואינו מבצע שליחות בשטח', () => {
+    expect(canExecuteTask(operationCommander, taskScope)).toBe(false);
+    expect(canExecuteMission(operationCommander, missionScope)).toBe(false);
+  });
+
+  it('אינו קולט ואינו מפזר בקריית התקשוב, גם כשהוא מוצב בה', () => {
+    expect(canHandleAtHub(operationCommander, scope, HUB)).toBe(false);
   });
 });

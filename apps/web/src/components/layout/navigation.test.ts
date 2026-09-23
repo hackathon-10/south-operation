@@ -27,6 +27,17 @@ describe('ניווט לפי תפקיד', () => {
     expect(paths).not.toContain('/audit');
   });
 
+  it('מפקד מבצע מקבל ניווט דק: דשבורד, בקשות הצטרפות ויומן פעולות בלבד', () => {
+    const paths = navItemsForRole(UserRole.OPERATION_COMMANDER).map((item) => item.to);
+    expect(paths).toEqual(['/', '/join-requests', '/audit']);
+  });
+
+  it('מפקד מבצע אינו מקבל סריקת QR - זו עבודת שטח', () => {
+    const paths = navItemsForRole(UserRole.OPERATION_COMMANDER).map((item) => item.to);
+    expect(paths).not.toContain('/scan');
+    expect(paths).not.toContain('/tasks');
+  });
+
   it('הניווט התחתון במובייל מכיל רק פריטים שסומנו לכך', () => {
     const mobile = mobileNavItemsForRole(UserRole.LOGISTICS_SOLDIER);
     expect(mobile.length).toBeLessThanOrEqual(5);

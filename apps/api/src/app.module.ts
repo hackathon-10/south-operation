@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AUTH_RATE_LIMIT, AUTH_RATE_TTL_MS } from './common/http/rate-limits';
 import { AppConfigModule } from './common/config/config.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -27,7 +28,7 @@ import { UsersModule } from './modules/users/users.module';
      */
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 240 },
-      { name: 'auth', ttl: 900_000, limit: 10 },
+      { name: 'auth', ttl: AUTH_RATE_TTL_MS, limit: AUTH_RATE_LIMIT },
       { name: 'scan', ttl: 60_000, limit: 60 },
     ]),
     PrismaModule,

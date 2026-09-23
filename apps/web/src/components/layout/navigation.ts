@@ -24,7 +24,12 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/',
     label: 'דשבורד',
     icon: DashboardRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.LOGISTICS_SOLDIER, UserRole.TEAM_LEAD],
+    roles: [
+      UserRole.LOGISTICS_COMMANDER,
+      UserRole.OPERATION_COMMANDER,
+      UserRole.LOGISTICS_SOLDIER,
+      UserRole.TEAM_LEAD,
+    ],
     mobile: true,
   },
   {
@@ -52,7 +57,8 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/join-requests',
     label: 'בקשות הצטרפות',
     icon: RuleFolderRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER],
+    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER],
+    mobile: true,
   },
   {
     to: '/scan',
@@ -71,10 +77,14 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/audit',
     label: 'יומן פעולות',
     icon: HistoryRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER],
+    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER],
   },
 ];
 
+/**
+ * ניווט מפקד המבצע דק בכוונה: דשבורד, בקשות הצטרפות ויומן פעולות בלבד.
+ * אל האריזות והשליחויות הוא מגיע בקדיחה משורה אדומה בדשבורד, לא מפריט קבוע.
+ */
 export function navItemsForRole(role: UserRole): NavItem[] {
   return NAV_ITEMS.filter((item) => item.roles.includes(role));
 }

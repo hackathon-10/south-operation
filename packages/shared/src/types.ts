@@ -549,6 +549,44 @@ export interface CommanderDashboardDto {
   nextMission: MissionSummaryDto | null;
 }
 
+/** חיווי בריאות של בסיס או יחידה בדשבורד מפקד המבצע. */
+export type OperationHealth = 'GREEN' | 'AMBER' | 'RED';
+
+/** שורה בדשבורד המאקרו: בסיס או יחידה ארגונית שתחתיו. */
+export interface OperationRowDto {
+  id: string;
+  name: string;
+  totalPackages: number;
+  deliveredPackages: number;
+  percentDelivered: number;
+  openTasks: number;
+  health: OperationHealth;
+  /** מה הוביל לחיווי, בעברית, מוכן לתצוגה. ריק כשהחיווי ירוק. */
+  reasons: string[];
+}
+
+export interface OperationBaseRowDto extends OperationRowDto {
+  baseCode: string;
+  /** היחידות הארגוניות שבבסיס. חיווי הבסיס הוא החמור שבהן. */
+  units: OperationRowDto[];
+}
+
+/** תמונת המאקרו של מפקד המבצע (§10.6). */
+export interface OperationDashboardDto {
+  headline: {
+    overallProgressPercent: number;
+    packagesDelivered: number;
+    packagesTotal: number;
+    missionsInTransit: number;
+    basesAtRisk: number;
+  };
+  bases: OperationBaseRowDto[];
+  /** ההחלטות היחידות שמפקד המבצע מקבל במערכת. */
+  pendingJoinRequests: JoinRequestDto[];
+  /** הרגע שבו נדגמה התמונה, לתצוגת "עודכן לפני X". */
+  generatedAt: string;
+}
+
 export interface SoldierDashboardDto {
   nextTask: PackingTaskSummaryDto | null;
   activeTasks: PackingTaskSummaryDto[];

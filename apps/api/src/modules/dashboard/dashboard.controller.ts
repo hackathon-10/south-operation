@@ -20,6 +20,17 @@ export class DashboardController {
     return this.dashboard.commander();
   }
 
+  @Get('operation')
+  @Roles(UserRole.OPERATION_COMMANDER)
+  @ApiOperation({
+    summary: 'תמונת מאקרו למפקד המבצע',
+    description:
+      'מצב כל הבסיסים והיחידות הארגוניות: התקדמות, חיווי בריאות והחלטות שממתינות לאישור.',
+  })
+  operation() {
+    return this.dashboard.operation();
+  }
+
   @Get('soldier')
   @Roles(UserRole.LOGISTICS_SOLDIER)
   @ApiOperation({

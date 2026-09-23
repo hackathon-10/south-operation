@@ -6,6 +6,8 @@
 
 export const UserRole = {
   LOGISTICS_COMMANDER: 'LOGISTICS_COMMANDER',
+  /** מפקד מבצע - תמונת מאקרו על כל הבסיסים והיחידות. קריאה בלבד, למעט אישור בקשות הצטרפות. */
+  OPERATION_COMMANDER: 'OPERATION_COMMANDER',
   LOGISTICS_SOLDIER: 'LOGISTICS_SOLDIER',
   TEAM_LEAD: 'TEAM_LEAD',
 } as const;

@@ -13,6 +13,7 @@ import type {
   JoinRequestDto,
   MissionDto,
   MissionSummaryDto,
+  OperationDashboardDto,
   PackageDto,
   PackageLabelDto,
   PackageScanResultDto,
@@ -65,6 +66,7 @@ export const queryKeys = {
   dashboardCommander: ['dashboard', 'commander'] as const,
   dashboardSoldier: ['dashboard', 'soldier'] as const,
   dashboardTeamLead: ['dashboard', 'team-lead'] as const,
+  dashboardOperation: ['dashboard', 'operation'] as const,
   bases: ['bases'] as const,
   teams: (params?: Params) => ['teams', params] as const,
   rooms: (params?: Params) => ['rooms', params] as const,
@@ -118,6 +120,17 @@ export const useTeamLeadDashboard = () =>
     queryKey: queryKeys.dashboardTeamLead,
     queryFn: () => get<TeamLeadDashboardDto>('/dashboard/team-lead'),
     refetchInterval: 60_000,
+  });
+
+/**
+ * תמונת המאקרו של מפקד המבצע.
+ * רענון תכוף יותר משאר הדשבורדים - זה מסך שנשאר פתוח על קיר.
+ */
+export const useOperationDashboard = () =>
+  useQuery({
+    queryKey: queryKeys.dashboardOperation,
+    queryFn: () => get<OperationDashboardDto>('/dashboard/operation'),
+    refetchInterval: 30_000,
   });
 
 // ==================== Reference data ====================
