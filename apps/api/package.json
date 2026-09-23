@@ -17,6 +17,7 @@
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "create:operation-manager": "ts-node --transpile-only prisma/create-operation-manager.ts",
     "create:demo-mission": "ts-node --transpile-only prisma/create-demo-mission.ts",
+    "create:demo-activity": "ts-node --transpile-only prisma/create-demo-activity.ts",
     "import:mapping": "ts-node --transpile-only prisma/import-mapping.ts",
     "test": "jest --config jest.config.js",
     "test:watch": "jest --config jest.config.js --watch",
