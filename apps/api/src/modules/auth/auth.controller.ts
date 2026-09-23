@@ -99,9 +99,12 @@ export class AuthController {
   /**
    * NoCyberHere: CSRF_PROTECTION
    * Threat: Cross-site request forgery על בסיס cookie
-   * Reason: ה-cookie הוא HttpOnly + SameSite=Strict (Lax בפיתוח לצורך פורטים שונים),
-   *         ו-Secure בפרודקשן. ה-Access Token נשלח בכותרת Authorization ולא ב-cookie,
-   *         ולכן בקשות חוצות-אתר אינן יכולות לבצע פעולות בשם המשתמש.
+   * Reason: ה-Frontend וה-API רצים על דומיינים שונים (ולכן CORS_ORIGINS קיים בכלל),
+   *         כך שה-cookie חייב SameSite=None כדי להישלח בבקשת /auth/refresh - אחרת
+   *         הדפדפן חוסם אותו בשקט ורענון דף מנתק את המשתמש בכל פעם. SameSite=None
+   *         מחייב Secure, שמוגדר בפרודקשן. ה-Access Token נשלח בכותרת Authorization
+   *         ולא ב-cookie, ותגובת ה-CORS ל-Origin לא ברשימה נחסמת - ולכן גם עם
+   *         SameSite=None, בקשה חוצת-אתר לא יכולה לקרוא את הטוקן החדש.
    */
   private setRefreshCookie(response: Response, refreshToken: string): void {
     response.cookie(REFRESH_COOKIE_NAME, refreshToken, {
@@ -114,7 +117,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: this.config.isProduction,
-      sameSite: this.config.isProduction ? ('strict' as const) : ('lax' as const),
+      sameSite: this.config.isProduction ? ('none' as const) : ('lax' as const),
       path: '/api/v1/auth',
     };
   }
