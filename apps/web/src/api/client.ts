@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import type { ApiErrorBody, LoginResponseDto } from '@south/shared';
+import type { ApiErrorBody, AuthUserDto, LoginResponseDto } from '@south/shared';
 
 /**
  * לקוח ה-API.
@@ -41,15 +41,24 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-let refreshPromise: Promise<string | null> | null = null;
+/**
+ * תגובת הרענון כוללת גם את פרטי המשתמש, ולכן אין צורך בקריאה נוספת ל-/auth/me
+ * בעליית האפליקציה - זה חוסך סיבוב רשת שלם לפני שהמסך הראשון מצויר.
+ */
+export interface RefreshResult {
+  accessToken: string;
+  user: AuthUserDto;
+}
 
-async function refreshAccessToken(): Promise<string | null> {
+let refreshPromise: Promise<RefreshResult | null> | null = null;
+
+async function refreshAccessToken(): Promise<RefreshResult | null> {
   if (!refreshPromise) {
     refreshPromise = axios
       .post<LoginResponseDto>(`${baseURL}/auth/refresh`, {}, { withCredentials: true })
       .then((response) => {
         accessToken = response.data.accessToken;
-        return accessToken;
+        return { accessToken: response.data.accessToken, user: response.data.user };
       })
       .catch(() => {
         accessToken = null;
@@ -71,9 +80,9 @@ api.interceptors.response.use(
 
     if (status === 401 && original && !original._retried && !isAuthRoute) {
       original._retried = true;
-      const token = await refreshAccessToken();
-      if (token) {
-        original.headers.set('Authorization', `Bearer ${token}`);
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        original.headers.set('Authorization', `Bearer ${refreshed.accessToken}`);
         return api.request(original);
       }
       onUnauthenticated?.();

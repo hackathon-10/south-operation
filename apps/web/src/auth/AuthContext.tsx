@@ -23,23 +23,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * בעליית האפליקציה מנסים לחדש את הסשן מתוך ה-Refresh Token שב-cookie.
    * כך רענון דף לא מנתק את המשתמש, והטוקן עצמו לעולם לא נשמר ב-localStorage.
+   *
+   * תגובת הרענון כוללת כבר את פרטי המשתמש, ולכן אין כאן קריאה נוספת ל-/auth/me:
+   * המסך הראשון מחכה לסיבוב רשת אחד במקום לשניים בטור.
    */
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const token = await refreshAccessToken();
+      const refreshed = await refreshAccessToken();
       if (cancelled) return;
 
-      if (token) {
-        try {
-          const response = await api.get<AuthUserDto>('/auth/me');
-          if (!cancelled) setUser(response.data);
-        } catch {
-          setAccessToken(null);
-        }
-      }
-      if (!cancelled) setBootstrapping(false);
+      if (refreshed) setUser(refreshed.user);
+      setBootstrapping(false);
     })();
 
     return () => {

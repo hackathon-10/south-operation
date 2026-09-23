@@ -76,9 +76,68 @@ export function LoginPage() {
         minHeight: '100dvh',
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+        // במובייל הכותרת בגובה התוכן בלבד והטופס ממלא את השאר;
+        // בדסקטופ שורה אחת שממלאת את כל הגובה (שני הפאנלים מלאים).
+        gridTemplateRows: { xs: 'auto 1fr', md: '1fr' },
         backgroundColor: palette.canvas,
       }}
     >
+      {/* כותרת מיתוג למובייל - בדסקטופ הפאנל הצדדי ממלא את התפקיד הזה */}
+      <Box
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          position: 'relative',
+          overflow: 'hidden',
+          px: 3,
+          pt: 5,
+          pb: 7,
+          background: `linear-gradient(160deg, ${palette.navy900} 0%, ${palette.navy700} 100%)`,
+          color: palette.textInverse,
+          borderEndStartRadius: 28,
+          borderEndEndRadius: 28,
+        }}
+      >
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            width: 260,
+            height: 260,
+            borderRadius: '50%',
+            top: -130,
+            insetInlineEnd: -90,
+            background: `radial-gradient(circle, ${palette.primary}40 0%, transparent 70%)`,
+          }}
+        />
+        <Stack direction="row" alignItems="center" gap={1.5} sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              width: 46,
+              height: 46,
+              borderRadius: radii.control,
+              display: 'grid',
+              placeItems: 'center',
+              backgroundColor: 'rgba(255,255,255,.12)',
+              border: '1px solid rgba(255,255,255,.18)',
+              flexShrink: 0,
+            }}
+          >
+            <ShieldRoundedIcon sx={{ fontSize: 25 }} />
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 800, lineHeight: 1.15 }}>
+              המעבר דרומה
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, opacity: 0.75 }}>
+              ניהול אריזה, שינוע וקליטה
+            </Typography>
+          </Box>
+        </Stack>
+        <Typography sx={{ fontSize: 14.5, opacity: 0.88, mt: 2.5, position: 'relative' }}>
+          מקבלים משימה, אורזים, סוגרים עם QR — ובקליטה יודעים בדיוק לאיזה חדר הציוד הולך.
+        </Typography>
+      </Box>
+
       {/* פאנל מיתוג */}
       <Box
         sx={{
@@ -177,9 +236,24 @@ export function LoginPage() {
       </Box>
 
       {/* טופס */}
-      <Box sx={{ display: 'grid', placeItems: 'center', px: { xs: 2, md: 6 }, py: 6 }}>
-        <Card sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: 440 }}>
-          <Typography sx={{ fontSize: 24, fontWeight: 800 }}>התחברות למערכת</Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          placeItems: 'center',
+          alignContent: { xs: 'start', md: 'center' },
+          px: { xs: 2, md: 6 },
+          pt: { xs: 0, md: 6 },
+          pb: { xs: 4, md: 6 },
+          // הכרטיס עולה מעט על הכותרת המעוגלת במובייל, למראה אפליקטיבי.
+          mt: { xs: -5, md: 0 },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Card sx={{ p: { xs: 2.5, md: 4 }, width: '100%', maxWidth: 440 }}>
+          <Typography sx={{ fontSize: { xs: 21, md: 24 }, fontWeight: 800 }}>
+            התחברות למערכת
+          </Typography>
           <Typography sx={{ fontSize: 14, color: palette.textSecondary, mt: 0.5 }}>
             הזינו את פרטי המשתמש שלכם כדי להמשיך
           </Typography>
@@ -265,6 +339,20 @@ export function LoginPage() {
             </>
           )}
         </Card>
+
+        {/* במובייל אין את הפאנל הצדדי, ולכן ההבהרה מופיעה כאן */}
+        <Typography
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            fontSize: 12,
+            color: palette.textSecondary,
+            textAlign: 'center',
+            mt: 2.5,
+            px: 2,
+          }}
+        >
+          כל הנתונים במערכת הם נתוני דמה סינתטיים.
+        </Typography>
       </Box>
     </Box>
   );
