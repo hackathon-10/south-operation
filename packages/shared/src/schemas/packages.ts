@@ -11,6 +11,8 @@ import {
 export const createPackageSchema = z
   .object({
     packageType: z.nativeEnum(PackageType),
+    /** האחראי על האריזה - נבחר על ידי החייל בעת הפתיחה. */
+    responsibleUserId: uuidSchema,
     notes: noteTextSchema.optional(),
   })
   .strict();
@@ -19,6 +21,7 @@ export type CreatePackageInput = z.infer<typeof createPackageSchema>;
 export const updatePackageSchema = z
   .object({
     packageType: z.nativeEnum(PackageType).optional(),
+    responsibleUserId: uuidSchema.optional(),
     notes: noteTextSchema.nullable().optional(),
   })
   .strict()

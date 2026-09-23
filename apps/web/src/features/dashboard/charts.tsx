@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
   Bar,
   BarChart,
@@ -69,6 +69,13 @@ export function HorizontalBarChart({
   emptyLabel?: string;
   highlightIndex?: number;
 }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // במובייל עמודת התוויות חייבת להיות צרה יותר, אחרת כמעט לא נשאר רוחב לעמודות
+  // עצמן. שולי השמאל מפנים מקום לתווית הערך, שאחרת נחתכת בקצה.
+  const axisWidth = isMobile ? 104 : 148;
+  const chartMargin = { top: 4, right: isMobile ? 16 : 44, bottom: 4, left: 34 };
+
   const hasValues = data.some((item) => item.value > 0);
 
   if (!hasValues) {
@@ -82,17 +89,17 @@ export function HorizontalBarChart({
   return (
     <Box sx={{ height, direction: 'ltr' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 44, bottom: 4, left: 4 }}>
+        <BarChart data={data} layout="vertical" margin={chartMargin}>
           <CartesianGrid horizontal={false} stroke={palette.border} />
           <XAxis type="number" hide />
           <YAxis
             type="category"
             dataKey="label"
-            width={148}
+            width={axisWidth}
             axisLine={false}
             tickLine={false}
             orientation="right"
-            tick={{ fontSize: 12.5, fill: palette.textSecondary, textAnchor: 'end' }}
+            tick={{ fontSize: isMobile ? 11.5 : 12.5, fill: palette.textSecondary, textAnchor: 'end' }}
           />
           <Tooltip
             cursor={{ fill: palette.surfaceMuted }}

@@ -309,6 +309,9 @@ export interface PackageSummaryDto {
   sealedAt: string | null;
   createdAt: string;
   priority: TaskPriority;
+  /** האחראי על האריזה, נקבע בעת פתיחתה. */
+  responsibleUserId: string;
+  responsibleUserName: string;
 }
 
 export interface PackageDto extends PackageSummaryDto {

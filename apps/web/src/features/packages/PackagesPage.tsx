@@ -3,8 +3,8 @@ import { Box, Button, Card, Divider, Stack, Typography } from '@mui/material';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import QrCodeRoundedIcon from '@mui/icons-material/QrCodeRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import MeetingRoomRoundedIcon from '@mui/icons-material/MeetingRoomRounded';
-import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PACKAGE_STATUSES, PACKAGE_STATUS_LABEL, UserRole } from '@south/shared';
@@ -172,9 +172,9 @@ export function PackagesPage() {
                   value: `קומה ${pkg.destination.floor} · ${pkg.destinationRoomName}`,
                 },
                 {
-                  icon: <WidgetsRoundedIcon sx={{ fontSize: 15 }} />,
-                  label: 'מקור',
-                  value: pkg.sourceRoomName,
+                  icon: <PersonRoundedIcon sx={{ fontSize: 15 }} />,
+                  label: 'אחראי',
+                  value: pkg.responsibleUserName,
                 },
                 {
                   icon: <EventRoundedIcon sx={{ fontSize: 15 }} />,

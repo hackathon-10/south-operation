@@ -208,13 +208,16 @@ describe('המעבר דרומה - זרימה מלאה', () => {
       const response = await request(app.getHttpServer())
         .post(api(`/packing-tasks/${taskId}/packages`))
         .set(auth(soldierGdnToken))
-        .send({ packageType: 'PROFESSIONAL_BOX' })
+        .send({ packageType: 'PROFESSIONAL_BOX', responsibleUserId: fixtures.teamLeadId })
         .expect(201);
 
       packageOneId = response.body.id;
       publicToken = '';
       expect(response.body.packageNumber).toMatch(/^PKG-\d{5}$/);
       expect(response.body.status).toBe('OPEN');
+      // האחראי נקבע על ידי החייל ואינו בהכרח מי שפתח את האריזה.
+      expect(response.body.responsibleUserId).toBe(fixtures.teamLeadId);
+      expect(response.body.responsibleUserName).toBeTruthy();
       expect(response.body).not.toHaveProperty('publicToken');
     });
 
@@ -297,7 +300,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
       const created = await request(app.getHttpServer())
         .post(api(`/packing-tasks/${taskId}/packages`))
         .set(auth(soldierGdnToken))
-        .send({ packageType: 'PERSONAL_BOX' })
+        .send({ packageType: 'PERSONAL_BOX', responsibleUserId: fixtures.soldierGdnId })
         .expect(201);
       packageTwoId = created.body.id;
 
@@ -372,7 +375,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
       const tzrPackage = await request(app.getHttpServer())
         .post(api(`/packing-tasks/${tzrTask.body.id}/packages`))
         .set(auth(soldierTzrToken))
-        .send({ packageType: 'CRATE' })
+        .send({ packageType: 'CRATE', responsibleUserId: fixtures.soldierTzrId })
         .expect(201);
 
       await request(app.getHttpServer())
@@ -456,7 +459,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
       const extraPackage = await request(app.getHttpServer())
         .post(api(`/packing-tasks/${tzrTask.body.id}/packages`))
         .set(auth(soldierTzrToken))
-        .send({ packageType: 'BULK_CONTAINER' })
+        .send({ packageType: 'BULK_CONTAINER', responsibleUserId: fixtures.soldierGdnId })
         .expect(201);
 
       await request(app.getHttpServer())

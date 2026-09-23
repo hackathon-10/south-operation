@@ -40,6 +40,7 @@ export const packageSummaryInclude = {
       mission: { select: { id: true, missionNumber: true, assignedSoldierId: true, status: true } },
     },
   },
+  responsibleUser: { select: { id: true, fullName: true } },
   assets: { select: { id: true } },
   bulkLines: { select: { quantity: true } },
 } satisfies Prisma.PackageInclude;
@@ -116,6 +117,8 @@ export function toPackageSummary(row: PackageSummaryRow): PackageSummaryDto {
     sealedAt: row.sealedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     priority: row.task.priority as TaskPriority,
+    responsibleUserId: row.responsibleUserId,
+    responsibleUserName: row.responsibleUser.fullName,
   };
 }
 

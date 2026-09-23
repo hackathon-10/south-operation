@@ -201,6 +201,7 @@ export function PackageDetailPage() {
           <StatusBadge label={labels.package[pkg.status]} tone={packageTone[pkg.status]} />
           <Chip size="small" label={PACKAGE_TYPE_LABEL[pkg.packageType]} />
           <Chip size="small" label={`צוות: ${pkg.teamName}`} />
+          <Chip size="small" label={`אחראי: ${pkg.responsibleUserName}`} />
           <Chip size="small" label={`משימה: ${pkg.taskNumber}`} component={Link} to={`/tasks/${pkg.packingTaskId}`} clickable />
           {pkg.missionNumber && (
             <Chip
