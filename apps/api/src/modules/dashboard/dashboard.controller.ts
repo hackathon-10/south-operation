@@ -21,7 +21,7 @@ export class DashboardController {
   }
 
   @Get('operation')
-  @Roles(UserRole.OPERATION_COMMANDER)
+  @Roles(UserRole.OPERATION_MANAGER)
   @ApiOperation({
     summary: 'תמונת מאקרו למפקד המבצע',
     description:

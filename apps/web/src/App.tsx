@@ -85,7 +85,7 @@ export function App() {
             <Protected
               roles={[
                 UserRole.LOGISTICS_COMMANDER,
-                UserRole.OPERATION_COMMANDER,
+                UserRole.OPERATION_MANAGER,
                 UserRole.LOGISTICS_SOLDIER,
               ]}
             >
@@ -107,7 +107,7 @@ export function App() {
             <Protected
               roles={[
                 UserRole.LOGISTICS_COMMANDER,
-                UserRole.OPERATION_COMMANDER,
+                UserRole.OPERATION_MANAGER,
                 UserRole.LOGISTICS_SOLDIER,
               ]}
             >
@@ -119,7 +119,7 @@ export function App() {
         <Route
           path="/join-requests"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER]}>
+            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER]}>
               <JoinRequestsPage />
             </Protected>
           }
@@ -132,7 +132,7 @@ export function App() {
         <Route
           path="/audit"
           element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER]}>
+            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER]}>
               <AuditPage />
             </Protected>
           }

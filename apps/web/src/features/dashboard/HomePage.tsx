@@ -19,7 +19,7 @@ export function HomePage() {
   switch (user.role) {
     case UserRole.LOGISTICS_COMMANDER:
       return <CommanderDashboard />;
-    case UserRole.OPERATION_COMMANDER:
+    case UserRole.OPERATION_MANAGER:
       return <OperationDashboard />;
     case UserRole.LOGISTICS_SOLDIER:
       return <SoldierHome />;

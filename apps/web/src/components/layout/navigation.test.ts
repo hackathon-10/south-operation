@@ -28,12 +28,12 @@ describe('ניווט לפי תפקיד', () => {
   });
 
   it('מפקד מבצע מקבל ניווט דק: דשבורד, בקשות הצטרפות ויומן פעולות בלבד', () => {
-    const paths = navItemsForRole(UserRole.OPERATION_COMMANDER).map((item) => item.to);
+    const paths = navItemsForRole(UserRole.OPERATION_MANAGER).map((item) => item.to);
     expect(paths).toEqual(['/', '/join-requests', '/audit']);
   });
 
   it('מפקד מבצע אינו מקבל סריקת QR - זו עבודת שטח', () => {
-    const paths = navItemsForRole(UserRole.OPERATION_COMMANDER).map((item) => item.to);
+    const paths = navItemsForRole(UserRole.OPERATION_MANAGER).map((item) => item.to);
     expect(paths).not.toContain('/scan');
     expect(paths).not.toContain('/tasks');
   });

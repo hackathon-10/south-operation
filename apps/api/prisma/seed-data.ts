@@ -248,7 +248,7 @@ export const DEMO_USERS = [
     identityNumber: '9000007',
     fullName: 'אל״ם יואב ברנע',
     email: 'operation@south.demo',
-    role: 'OPERATION_COMMANDER',
+    role: 'OPERATION_MANAGER',
     baseCode: 'KT',
     teamCode: null,
     description: 'מפקד המבצע - תמונת מאקרו על כל הבסיסים והיחידות',

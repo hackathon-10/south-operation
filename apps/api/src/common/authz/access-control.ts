@@ -39,12 +39,12 @@ export const isTeamLead = (user: AuthenticatedUser): boolean => user.role === Us
  * מפקד מבצע - תפקיד מאקרו. רואה את כל המבצע, ואינו מבצע בו דבר.
  * הפעולה היחידה שלו במערכת היא אישור בקשת הצטרפות לשליחות.
  */
-export const isOperationCommander = (user: AuthenticatedUser): boolean =>
-  user.role === UserRole.OPERATION_COMMANDER;
+export const isOperationManager = (user: AuthenticatedUser): boolean =>
+  user.role === UserRole.OPERATION_MANAGER;
 
 /** מי שרשאי לצפות בכל המבצע ללא סינון: מפקד לוגיסטיקה ומפקד מבצע. */
 const seesEverything = (user: AuthenticatedUser): boolean =>
-  isCommander(user) || isOperationCommander(user);
+  isCommander(user) || isOperationManager(user);
 
 /** האם המשתמש מוצב בקריית התקשוב (בסיס היעד). */
 export function isHubUser(user: AuthenticatedUser, hubBaseId: string | null): boolean {
@@ -78,7 +78,7 @@ export function canViewPackage(
 /** עריכת תכולת אריזה - רק החייל שהמשימה שויכה אליו, או מפקד לוגיסטיקה. */
 export function canEditPackageContent(user: AuthenticatedUser, scope: PackageScope): boolean {
   // מפקד מבצע אינו נוגע בתכולה - הוא צופה בלבד.
-  if (isOperationCommander(user)) return false;
+  if (isOperationManager(user)) return false;
   if (isCommander(user)) return true;
   return isSoldier(user) && scope.taskAssignedSoldierId === user.id;
 }
@@ -90,7 +90,7 @@ export function canHandleAtHub(
   hubBaseId: string | null,
 ): boolean {
   // מפקד מבצע אינו קולט ואינו מפזר, גם כשהוא מוצב בקריית התקשוב.
-  if (isOperationCommander(user)) return false;
+  if (isOperationManager(user)) return false;
   if (isCommander(user)) return true;
   if (!isSoldier(user)) return false;
   if (scope.missionAssignedSoldierId === user.id) return true;

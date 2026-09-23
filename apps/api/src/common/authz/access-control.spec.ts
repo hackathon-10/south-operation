@@ -12,7 +12,7 @@ import {
   canViewPackage,
   canViewSecuredTransportNotes,
   canViewTask,
-  isOperationCommander,
+  isOperationManager,
 } from './access-control';
 
 const HUB = 'base-hub';
@@ -60,11 +60,11 @@ const teamLead: AuthenticatedUser = {
   teamIds: ['team-dev'],
 };
 
-const operationCommander: AuthenticatedUser = {
+const operationManager: AuthenticatedUser = {
   id: 'op-commander-1',
   email: 'op@demo',
   fullName: 'מפקד מבצע',
-  role: UserRole.OPERATION_COMMANDER,
+  role: UserRole.OPERATION_MANAGER,
   baseId: HUB,
   teamId: null,
   teamIds: [],
@@ -193,40 +193,40 @@ describe('בקרת גישה למפקד מבצע', () => {
   };
 
   it('מזוהה כמפקד מבצע ואינו מזוהה כמפקד לוגיסטיקה', () => {
-    expect(isOperationCommander(operationCommander)).toBe(true);
-    expect(isOperationCommander(commander)).toBe(false);
+    expect(isOperationManager(operationManager)).toBe(true);
+    expect(isOperationManager(commander)).toBe(false);
   });
 
   it('רואה כל אריזה, בכל בסיס ובכל צוות', () => {
-    expect(canViewPackage(operationCommander, scope, HUB)).toBe(true);
-    expect(canViewPackage(operationCommander, { ...scope, teamId: 'team-זר' }, HUB)).toBe(true);
-    expect(canViewPackage(operationCommander, { ...scope, sourceBaseId: 'base-זר' }, HUB)).toBe(
+    expect(canViewPackage(operationManager, scope, HUB)).toBe(true);
+    expect(canViewPackage(operationManager, { ...scope, teamId: 'team-זר' }, HUB)).toBe(true);
+    expect(canViewPackage(operationManager, { ...scope, sourceBaseId: 'base-זר' }, HUB)).toBe(
       true,
     );
   });
 
   it('רואה כל משימה וכל שליחות', () => {
-    expect(canViewTask(operationCommander, taskScope)).toBe(true);
-    expect(canViewMission(operationCommander, missionScope, HUB)).toBe(true);
-    expect(canViewMission(operationCommander, { ...missionScope, stopBaseIds: [] }, HUB)).toBe(
+    expect(canViewTask(operationManager, taskScope)).toBe(true);
+    expect(canViewMission(operationManager, missionScope, HUB)).toBe(true);
+    expect(canViewMission(operationManager, { ...missionScope, stopBaseIds: [] }, HUB)).toBe(
       true,
     );
   });
 
   it('רואה הנחיות נסיעה מאובטחת - הוא המפקד הבכיר במבצע', () => {
-    expect(canViewSecuredTransportNotes(operationCommander, missionScope)).toBe(true);
+    expect(canViewSecuredTransportNotes(operationManager, missionScope)).toBe(true);
   });
 
   it('אינו עורך תכולת אריזה', () => {
-    expect(canEditPackageContent(operationCommander, scope)).toBe(false);
+    expect(canEditPackageContent(operationManager, scope)).toBe(false);
   });
 
   it('אינו מבצע משימה ואינו מבצע שליחות בשטח', () => {
-    expect(canExecuteTask(operationCommander, taskScope)).toBe(false);
-    expect(canExecuteMission(operationCommander, missionScope)).toBe(false);
+    expect(canExecuteTask(operationManager, taskScope)).toBe(false);
+    expect(canExecuteMission(operationManager, missionScope)).toBe(false);
   });
 
   it('אינו קולט ואינו מפזר בקריית התקשוב, גם כשהוא מוצב בה', () => {
-    expect(canHandleAtHub(operationCommander, scope, HUB)).toBe(false);
+    expect(canHandleAtHub(operationManager, scope, HUB)).toBe(false);
   });
 });

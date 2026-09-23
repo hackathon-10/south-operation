@@ -20,7 +20,7 @@ import {
  */
 export const USER_ROLE_LABEL: Record<UserRole, string> = {
   LOGISTICS_COMMANDER: 'מפקד לוגיסטיקה',
-  OPERATION_COMMANDER: 'מפקד מבצע',
+  OPERATION_MANAGER: 'מפקד מבצע',
   LOGISTICS_SOLDIER: 'חייל לוגיסטיקה',
   TEAM_LEAD: 'ראש צוות',
 };

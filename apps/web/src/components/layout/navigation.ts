@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: DashboardRoundedIcon,
     roles: [
       UserRole.LOGISTICS_COMMANDER,
-      UserRole.OPERATION_COMMANDER,
+      UserRole.OPERATION_MANAGER,
       UserRole.LOGISTICS_SOLDIER,
       UserRole.TEAM_LEAD,
     ],
@@ -57,7 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/join-requests',
     label: 'בקשות הצטרפות',
     icon: RuleFolderRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER],
+    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER],
     mobile: true,
   },
   {
@@ -77,7 +77,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/audit',
     label: 'יומן פעולות',
     icon: HistoryRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_COMMANDER],
+    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER],
   },
 ];
 

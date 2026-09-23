@@ -29,7 +29,7 @@ datasource db {
 enum UserRole {
   LOGISTICS_COMMANDER
   /// מפקד מבצע - תמונת מאקרו בלבד על כל הבסיסים והיחידות.
-  OPERATION_COMMANDER
+  OPERATION_MANAGER
   LOGISTICS_SOLDIER
   TEAM_LEAD
 }

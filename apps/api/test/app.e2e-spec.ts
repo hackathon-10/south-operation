@@ -21,7 +21,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
   const api = (path: string) => `/${API_PREFIX}${path}`;
 
   let commanderToken: string;
-  let operationCommanderToken: string;
+  let operationManagerToken: string;
   let soldierGdnToken: string;
   let soldierTzrToken: string;
   let soldierHubToken: string;
@@ -61,7 +61,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
     await app.init();
 
     commanderToken = await login('commander@test.demo');
-    operationCommanderToken = await login('operation@test.demo');
+    operationManagerToken = await login('operation@test.demo');
     soldierGdnToken = await login('soldier.gdn@test.demo');
     soldierTzrToken = await login('soldier.tzr@test.demo');
     soldierHubToken = await login('soldier.hub@test.demo');
@@ -744,7 +744,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
     it('Dashboard מפקד המבצע מחזיר תמונת מאקרו של בסיסים ויחידות', async () => {
       const response = await request(app.getHttpServer())
         .get(api('/dashboard/operation'))
-        .set(auth(operationCommanderToken))
+        .set(auth(operationManagerToken))
         .expect(200);
 
       expect(response.body.headline.packagesTotal).toBeGreaterThan(0);
@@ -770,7 +770,7 @@ describe('המעבר דרומה - זרימה מלאה', () => {
     it('מפקד המבצע חסום מנתיבי כתיבה על אריזות', async () => {
       await request(app.getHttpServer())
         .get(api('/dashboard/commander'))
-        .set(auth(operationCommanderToken))
+        .set(auth(operationManagerToken))
         .expect(403);
     });
 

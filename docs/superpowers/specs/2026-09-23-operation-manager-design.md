@@ -1,4 +1,4 @@
-# מפקד מבצע (OPERATION_COMMANDER) - מסמך עיצוב
+# מפקד מבצע (OPERATION_MANAGER) - מסמך עיצוב
 
 תאריך: 2026-09-23
 
@@ -41,7 +41,7 @@
 
 ## 4. שכבת ההרשאות
 
-מתווספת הפונקציה `isOperationCommander`, וכל פונקציה ב-`access-control.ts` מטפלת בתפקיד
+מתווספת הפונקציה `isOperationManager`, וכל פונקציה ב-`access-control.ts` מטפלת בתפקיד
 החדש במפורש:
 
 | פונקציה | מפקד מבצע | נימוק |
@@ -61,7 +61,7 @@
 
 ## 5. נקודת הקצה
 
-`GET /api/v1/dashboard/operation`, מוגנת ב-`@Roles(UserRole.OPERATION_COMMANDER)`,
+`GET /api/v1/dashboard/operation`, מוגנת ב-`@Roles(UserRole.OPERATION_MANAGER)`,
 לצד שלוש נקודות הדשבורד הקיימות.
 
 מבנה התשובה:
@@ -127,7 +127,7 @@
 
 **מסד ושכבה משותפת**
 - `apps/api/prisma/schema.prisma` - ערך ל-`UserRole`
-- `apps/api/prisma/migrations/<timestamp>_add_operation_commander_role/` - מיגרציה חדשה
+- `apps/api/prisma/migrations/<timestamp>_add_operation_manager_role/` - מיגרציה חדשה
 - `packages/shared/src/enums.ts`, `packages/shared/src/labels.ts` - הערך והתווית `מפקד מבצע`
 
 **API**
