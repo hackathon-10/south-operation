@@ -143,18 +143,37 @@ outside of the Root Directory in the Build Step**. בלי זה ה-Build ייכש
 5. להוסיף את משתני הסביבה (ראו בהמשך) ולהריץ Deploy.
 6. לחזור על 1-5 ליצירת הפרויקט השני מאותו Repository.
 
+### חשוב: להשתמש תמיד בכתובת היציבה של כל פרויקט
+
+לכל פרויקט ב-Vercel יש שני סוגי כתובות:
+
+| סוג | דוגמה | מתי משתנה |
+| --- | --- | --- |
+| **יציבה** (להשתמש בה) | `south-operation-web-client.vercel.app` | לעולם לא - מצביעה תמיד ל-Production האחרון |
+| Deployment חד-פעמי | `south-operation-web-client-2kxhejzbv-...vercel.app` | בכל Deploy מחדש, וקופאת על הגרסה שנבנתה אז |
+
+הכתובת היציבה נמצאת ב-**Settings → Domains** של הפרויקט. כל משתני הסביבה שמצביעים
+בין הפרויקטים (`CORS_ORIGINS`, `WEB_APP_URL`, `VITE_API_BASE_URL`) חייבים להשתמש בכתובת
+היציבה - אחרת כל Deploy שובר את החיבור ביניהם, וקודי QR שהודפסו מצביעים לגרסה קפואה.
+
 ### פרויקט ה-API
 
 - Root Directory: `apps/api`.
 - `apps/api/vercel.json` מריץ `prisma generate` בזמן ה-Build ומפנה כל בקשה לנקודת הכניסה
   היחידה `apps/api/api/index.ts` (Serverless Function שמריצה את אותה אפליקציית Nest בדיוק
   כמו בהרצה מקומית, כולל כל בקרות האבטחה).
+- **אזור הרצה:** `vercel.json` מקבע את הפונקציה ל-`arn1` (שטוקהולם). ברירת המחדל של
+  Vercel היא `iad1` (וושינגטון), ואם מסד הנתונים ב-Supabase יושב באזור אחר כל שאילתה
+  משלמת סיבוב רשת חוצה-יבשות. יש להתאים את האזור לאזור של פרויקט ה-Supabase
+  ([רשימת האזורים](https://vercel.com/docs/regions)).
 - משתני סביבה נדרשים (Project Settings → Environment Variables): כל המשתנים המפורטים
   ב-[`.env.example`](.env.example) תחת "API", עם `NODE_ENV=production` ו-
   `ENABLE_DEMO_LOGIN=false` (חובה - ראו אזהרה בקוד וב-`docs/security.md`).
-  `CORS_ORIGINS` צריך להצביע לכתובת ה-Vercel של ה-Frontend.
+  `CORS_ORIGINS` ו-`WEB_APP_URL` צריכים להצביע לכתובת היציבה של ה-Frontend.
 - לפני ה-Deploy הראשון יש להריץ `npm run migrate:deploy` מול `DATABASE_URL`/`DIRECT_URL` של
   הסביבה (מקומית או ב-CI) - Vercel עצמו לא מריץ migrations אוטומטית.
+- **Deployment Protection:** פרויקט חדש חוסם גישה אנונימית (מחזיר 302 ל-SSO של Vercel).
+  ל-API ציבורי יש לכבות: **Settings → Deployment Protection → Disabled**.
 
 ### פרויקט ה-Frontend
 
@@ -162,7 +181,10 @@ outside of the Root Directory in the Build Step**. בלי זה ה-Build ייכש
 - `apps/web/vercel.json` בונה עם `npm run build:shared && npm run build -w @south/web`
   (מריץ מ-`cd ../..` בחזרה לשורש ה-Repository כדי לגשת ל-Workspaces) ומגיש את
   `apps/web/dist` כאתר סטטי (SPA fallback ל-`index.html`).
-- משתנה סביבה נדרש: `VITE_API_BASE_URL` = כתובת פרויקט ה-API ב-Vercel + `/api/v1`.
+- משתנה סביבה נדרש: `VITE_API_BASE_URL` = הכתובת היציבה של פרויקט ה-API + `/api/v1`.
+  הערך נצרב ל-Bundle בזמן ה-Build, ולכן כל שינוי שלו מחייב Redeploy של ה-Frontend
+  (לא מספיק לשמור את המשתנה).
+- גם כאן יש לכבות Deployment Protection כדי שהאתר יהיה נגיש לכולם.
 
 ## חשבונות דמו
 

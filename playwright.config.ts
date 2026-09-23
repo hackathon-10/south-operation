@@ -39,7 +39,7 @@ export default defineConfig({
       env: {
         E2E_API_PORT: String(API_PORT),
         CORS_ORIGINS: `http://127.0.0.1:${WEB_PORT},http://localhost:${WEB_PORT}`,
-        PUBLIC_WEB_URL: `http://127.0.0.1:${WEB_PORT}`,
+        WEB_APP_URL: `http://127.0.0.1:${WEB_PORT}`,
         SEED_DEMO_PASSWORD: 'Demo!2345',
       },
     },

@@ -22,7 +22,7 @@ async function bootstrap(): Promise<void> {
   process.env.JWT_ACCESS_SECRET = 'e2e-access-secret-that-is-long-enough-32-chars';
   process.env.JWT_REFRESH_SECRET = 'e2e-refresh-secret-that-is-long-enough-32-chars';
   process.env.CORS_ORIGINS = process.env.CORS_ORIGINS ?? 'http://localhost:5173';
-  process.env.PUBLIC_WEB_URL = process.env.PUBLIC_WEB_URL ?? 'http://localhost:5173';
+  process.env.WEB_APP_URL = process.env.WEB_APP_URL ?? 'http://localhost:5173';
   process.env.ENABLE_DEMO_LOGIN = 'true';
   process.env.SEED_DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD ?? 'Demo!2345';
   process.env.SWAGGER_ENABLED = 'false';

@@ -179,7 +179,7 @@ export class PackagesService {
     return {
       packageNumber: row.packageNumber,
       // ה-QR מכיל URL עם Token אקראי בלבד: אין בו שם, בעלים, יחידה, חדר או מק״ט.
-      qrUrl: buildScanUrl(this.config.PUBLIC_WEB_URL, row.publicToken),
+      qrUrl: buildScanUrl(this.config.WEB_APP_URL, row.publicToken),
       sourceBaseName: row.sourceRoom.base.name,
       sourceRoomName: row.sourceRoom.displayName,
       teamName: row.team.name,
