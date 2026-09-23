@@ -230,7 +230,16 @@ export class DashboardService {
   async operation(): Promise<OperationDashboardDto> {
     const now = new Date();
 
-    const [bases, packages, tasks, missionsInTransit, joinRequests] = await Promise.all([
+    const [
+      bases,
+      packages,
+      tasks,
+      missionGroups,
+      joinRequests,
+      equipmentPackedPercent,
+      timings,
+      tripsSaved,
+    ] = await Promise.all([
       this.prisma.base.findMany({
         orderBy: { name: 'asc' },
         select: {
@@ -264,14 +273,23 @@ export class DashboardService {
           team: { select: { unitId: true } },
         },
       }),
-      this.prisma.transportMission.count({ where: { status: MissionStatus.IN_TRANSIT } }),
+      this.prisma.transportMission.groupBy({ by: ['status'], _count: { _all: true } }),
       this.prisma.missionJoinRequest.findMany({
         where: { status: JoinRequestStatus.PENDING },
         include: joinRequestInclude,
         relationLoadStrategy: 'join',
         orderBy: { createdAt: 'asc' },
       }),
+      // מדדי צי רוחביים - אותם חישובים בדיוק כמו אצל מפקד הלוגיסטיקה (§15),
+      // כי מפקד המבצע לא רואה שליחות או משימה בודדת, רק את התמונה הכוללת.
+      this.equipmentPackedPercent(),
+      this.averageTimings(),
+      this.estimatedTripsSaved(),
     ]);
+
+    const missionCount = (status: MissionStatus): number =>
+      missionGroups.find((group) => group.status === status)?._count._all ?? 0;
+    const missionsInTransit = missionCount(MissionStatus.IN_TRANSIT);
 
     /** בונה שורת דשבורד אחת מתוך האריזות והמשימות ששויכו אליה. */
     const buildRow = (
@@ -350,6 +368,17 @@ export class DashboardService {
         packagesTotal,
         missionsInTransit,
         basesAtRisk: baseRows.filter((base) => base.health === 'RED').length,
+        equipmentPackedPercent,
+        estimatedTripsSaved: tripsSaved,
+        averageTaskToSealMinutes: timings.taskToSeal,
+        averageReadyToDepartMinutes: timings.readyToDepart,
+      },
+      missionsByStatus: {
+        planned: missionCount(MissionStatus.PLANNED),
+        loading: missionCount(MissionStatus.LOADING),
+        inTransit: missionsInTransit,
+        unloading: missionCount(MissionStatus.UNLOADING),
+        completed: missionCount(MissionStatus.COMPLETED),
       },
       bases: baseRows,
       pendingJoinRequests: joinRequests.map(toJoinRequestDto),

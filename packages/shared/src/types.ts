@@ -582,6 +582,20 @@ export interface OperationDashboardDto {
     packagesTotal: number;
     missionsInTransit: number;
     basesAtRisk: number;
+    /** אחוז הציוד שנארז מתוך המיפוי, בכל המערכת. הערכה (ראו equipmentPackedPercent ב-DashboardService). */
+    equipmentPackedPercent: number;
+    /** הערכת נסיעות שנחסכו באיחוד בסיסים, בכל המערכת. */
+    estimatedTripsSaved: number;
+    averageTaskToSealMinutes: number | null;
+    averageReadyToDepartMinutes: number | null;
+  };
+  /** כמה שליחויות בכל סטטוס, בכל המערכת - לתמונת מאקרו של צי השליחויות. */
+  missionsByStatus: {
+    planned: number;
+    loading: number;
+    inTransit: number;
+    unloading: number;
+    completed: number;
   };
   bases: OperationBaseRowDto[];
   /** ההחלטות היחידות שמפקד המבצע מקבל במערכת. */

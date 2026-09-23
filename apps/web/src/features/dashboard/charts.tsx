@@ -1,16 +1,18 @@
-import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   LabelList,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { palette, tones } from '../../theme/tokens';
+import { palette, tones, type ToneName } from '../../theme/tokens';
 
 /**
  * גרפים פשוטים בלבד, ורק כשהם עוזרים להבנה (§10.3).
@@ -121,6 +123,135 @@ export function HorizontalBarChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+    </Box>
+  );
+}
+
+export interface DonutDatum {
+  label: string;
+  value: number;
+  tone: ToneName;
+}
+
+function DonutTooltip({
+  active,
+  payload,
+  total,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: DonutDatum }>;
+  total: number;
+}) {
+  if (!active || !payload?.length) return null;
+  const datum = payload[0].payload;
+  const percent = total === 0 ? 0 : Math.round((datum.value / total) * 100);
+  return (
+    <Box
+      sx={{
+        backgroundColor: palette.navy800,
+        color: '#fff',
+        px: 1.25,
+        py: 0.75,
+        borderRadius: 1.5,
+        fontSize: 12.5,
+      }}
+    >
+      <strong>{datum.label}</strong>
+      <br />
+      {datum.value.toLocaleString('he-IL')} ({percent}%)
+    </Box>
+  );
+}
+
+/**
+ * "דונאט" עם מספר מרכזי - לתמונת מאקרו של מפקד המבצע (§10.6).
+ *
+ * הזהות בין הפלחים לעולם אינה נשענת על צבע בלבד: המקרא שמתחת מציג תווית
+ * וספירה לכל קטגוריה, כנדרש כשחלק מהגוונים (למשל כתום החיווי) אינם עומדים
+ * בניגודיות מלאה מול הרקע הבהיר.
+ */
+export function DonutChart({
+  data,
+  height = 200,
+  centerLabel,
+  emptyLabel = 'אין נתונים להצגה',
+}: {
+  data: DonutDatum[];
+  height?: number;
+  centerLabel?: string;
+  emptyLabel?: string;
+}) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  if (total === 0) {
+    return (
+      <Box sx={{ height, display: 'grid', placeItems: 'center' }}>
+        <Typography sx={{ fontSize: 13.5, color: palette.textSecondary }}>{emptyLabel}</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Box sx={{ position: 'relative', height }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="label"
+              innerRadius="62%"
+              outerRadius="100%"
+              paddingAngle={2}
+              cornerRadius={4}
+              stroke="none"
+              isAnimationActive={false}
+            >
+              {data.map((item) => (
+                <Cell key={item.label} fill={tones[item.tone].main} />
+              ))}
+            </Pie>
+            <Tooltip content={<DonutTooltip total={total} />} />
+          </PieChart>
+        </ResponsiveContainer>
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'grid',
+            placeItems: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          <Typography sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.1 }}>{total}</Typography>
+          {centerLabel && (
+            <Typography sx={{ fontSize: 11.5, color: palette.textSecondary, mt: 0.25 }}>
+              {centerLabel}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      <Stack direction="row" flexWrap="wrap" gap={1.25} sx={{ mt: 2 }}>
+        {data.map((item) => (
+          <Stack key={item.label} direction="row" alignItems="center" gap={0.75}>
+            <Box
+              aria-hidden="true"
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: tones[item.tone].main,
+                flexShrink: 0,
+              }}
+            />
+            <Typography sx={{ fontSize: 12.5, color: palette.textSecondary }}>
+              {item.label} <strong style={{ color: palette.textPrimary }}>{item.value}</strong>
+            </Typography>
+          </Stack>
+        ))}
+      </Stack>
     </Box>
   );
 }

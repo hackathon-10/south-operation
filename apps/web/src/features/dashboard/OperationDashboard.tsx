@@ -15,14 +15,22 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import ReportProblemRoundedIcon from '@mui/icons-material/ReportProblemRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import { Link } from 'react-router-dom';
-import type { OperationBaseRowDto, OperationHealth, OperationRowDto } from '@south/shared';
+import {
+  MISSION_STATUS_LABEL,
+  type OperationBaseRowDto,
+  type OperationHealth,
+  type OperationRowDto,
+} from '@south/shared';
 import { useOperationDashboard } from '../../api/queries';
 import { CardSkeletonGrid, EmptyState, ErrorState } from '../../components/ui/States';
 import { StatCard } from '../../components/ui/StatCard';
 import { useAuth } from '../../auth/AuthContext';
 import { palette, tones } from '../../theme/tokens';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatMinutes } from '../../utils/format';
+import { DonutChart, type DonutDatum } from './charts';
 import { GreetingHero } from './GreetingHero';
 import { QuickInsightChat } from './QuickInsightChat';
 
@@ -201,6 +209,25 @@ export function OperationDashboard() {
 
   const { headline } = data;
 
+  // סדר הצבעים כאן (אפור-מידע-ירוק-כתום-סגול) עבר אימות הפרדה מול עיוורון
+  // צבעים מול הרקע הבהיר; כל פלח מוצג גם עם תווית טקסט במקרא, כך שהזהות בין
+  // הפלחים לא נשענת על הגוון בלבד.
+  const healthCounts = { GREEN: 0, AMBER: 0, RED: 0 } as Record<OperationHealth, number>;
+  for (const base of data.bases) healthCounts[base.health] += 1;
+  const baseHealthData: DonutDatum[] = (['GREEN', 'AMBER', 'RED'] as const).map((health) => ({
+    label: HEALTH_LABEL[health],
+    value: healthCounts[health],
+    tone: HEALTH_TONE[health],
+  }));
+
+  const missionStatusData: DonutDatum[] = [
+    { label: MISSION_STATUS_LABEL.PLANNED, value: data.missionsByStatus.planned, tone: 'slate' },
+    { label: MISSION_STATUS_LABEL.IN_TRANSIT, value: data.missionsByStatus.inTransit, tone: 'info' },
+    { label: MISSION_STATUS_LABEL.COMPLETED, value: data.missionsByStatus.completed, tone: 'success' },
+    { label: MISSION_STATUS_LABEL.LOADING, value: data.missionsByStatus.loading, tone: 'warning' },
+    { label: MISSION_STATUS_LABEL.UNLOADING, value: data.missionsByStatus.unloading, tone: 'violet' },
+  ];
+
   return (
     <Box>
       <GreetingHero
@@ -244,6 +271,78 @@ export function OperationDashboard() {
           { label: 'מה צריך תשומת לב?', answer: data.bases.some((base) => base.health !== 'GREEN') ? 'יש כמה בסיסים או יחידות עם מצב לא תקין.' : 'המערכת נראית יציבה כרגע.' },
         ]}
       />
+
+      {/* מדדי צי רוחביים - אותם חישובים כמו אצל מפקד הלוגיסטיקה, אבל ברמת המערכת כולה */}
+      <Card sx={{ p: 2.5, mt: 3 }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          gap={3}
+          divider={<Divider orientation="vertical" flexItem />}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontSize: 13.5, color: palette.textSecondary }}>
+              ציוד שנארז מתוך המיפוי, בכל המערכת
+            </Typography>
+            <Stack direction="row" alignItems="baseline" gap={1} sx={{ mt: 0.5 }}>
+              <Typography sx={{ fontSize: 32, fontWeight: 800 }}>
+                {headline.equipmentPackedPercent}%
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: palette.textSecondary }}>הערכה</Typography>
+            </Stack>
+            <LinearProgress
+              variant="determinate"
+              value={headline.equipmentPackedPercent}
+              color="success"
+              sx={{ mt: 1.5 }}
+              aria-label="אחוז ציוד שנארז, בכל המערכת"
+            />
+          </Box>
+
+          <Stack sx={{ flex: 1 }} gap={1}>
+            <MetricLine
+              icon={<TimerRoundedIcon fontSize="small" />}
+              label="זמן ממוצע מפתיחת משימה עד סגירת אריזה"
+              value={formatMinutes(headline.averageTaskToSealMinutes)}
+            />
+            <MetricLine
+              icon={<TimerRoundedIcon fontSize="small" />}
+              label="המתנה ממוצעת מאריזה מוכנה עד יציאה"
+              value={formatMinutes(headline.averageReadyToDepartMinutes)}
+            />
+            <MetricLine
+              icon={<RouteRoundedIcon fontSize="small" />}
+              label="נסיעות שנחסכו באיחוד בסיסים (הערכה)"
+              value={`${headline.estimatedTripsSaved}`}
+            />
+          </Stack>
+        </Stack>
+      </Card>
+
+      {/* תמונת מאקרו ויזואלית: בריאות הבסיסים וצי השליחויות */}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+          mt: 2,
+        }}
+      >
+        <Card sx={{ p: 2.5 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>בריאות הבסיסים</Typography>
+          <Typography sx={{ fontSize: 12.5, color: palette.textSecondary, mb: 1.5 }}>
+            כמה בסיסים במצב תקין, דורשים תשומת לב או תקועים
+          </Typography>
+          <DonutChart data={baseHealthData} centerLabel="בסיסים" />
+        </Card>
+
+        <Card sx={{ p: 2.5 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>צי השליחויות</Typography>
+          <Typography sx={{ fontSize: 12.5, color: palette.textSecondary, mb: 1.5 }}>
+            כמה שליחויות בכל שלב, בכל המערכת
+          </Typography>
+          <DonutChart data={missionStatusData} centerLabel="שליחויות" />
+        </Card>
+      </Box>
 
       <Stack spacing={2} sx={{ mt: 3 }}>
         <Stack direction="row" alignItems="baseline" justifyContent="space-between">
@@ -295,5 +394,25 @@ export function OperationDashboard() {
         )}
       </Card>
     </Box>
+  );
+}
+
+function MetricLine({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <Box sx={{ color: palette.textSecondary, display: 'flex' }} aria-hidden="true">
+        {icon}
+      </Box>
+      <Typography sx={{ fontSize: 12.5, color: palette.textSecondary, flex: 1 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{value}</Typography>
+    </Stack>
   );
 }
