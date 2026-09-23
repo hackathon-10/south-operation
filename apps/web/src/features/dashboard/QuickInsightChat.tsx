@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Card,
@@ -31,14 +31,6 @@ export function QuickInsightChat({
   const [value, setValue] = useState('');
   const [lastAnswer, setLastAnswer] = useState<string | null>(null);
 
-  const promptMap = useMemo(
-    () =>
-      new Map(
-        prompts.map((prompt) => [prompt.label.toLowerCase().trim(), prompt.answer]),
-      ),
-    [prompts],
-  );
-
   const submit = (raw: string) => {
     const query = raw.trim();
     if (!query) return;
@@ -53,53 +45,66 @@ export function QuickInsightChat({
   };
 
   return (
-    <Card
+    <Box
       sx={{
-        p: 1.25,
-        mb: 3,
-        border: `1px solid ${tones.primary.soft}`,
-        background: `linear-gradient(135deg, ${tones.primary.soft} 0%, ${palette.surface} 100%)`,
-        transition: 'all 180ms ease',
+        ...(open
+          ? {
+              position: 'relative',
+              mb: 3,
+            }
+          : {
+              position: 'fixed',
+              right: 12,
+              top: '50%',
+              zIndex: 1200,
+              transform: 'translateY(-50%)',
+            }),
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              display: 'grid',
-              placeItems: 'center',
-              backgroundColor: tones.primary.soft,
-              color: tones.primary.main,
-            }}
-          >
-            <SmartToyRoundedIcon fontSize="small" />
-          </Box>
-          <Typography sx={{ fontSize: 13.5, fontWeight: 800 }}>{title}</Typography>
-        </Stack>
-
-        <IconButton
-          size="small"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? 'סגירת העוזר' : 'פתיחת העוזר'}
+      {open ? (
+        <Card
           sx={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            bgcolor: palette.surface,
-            border: `1px solid ${palette.border}`,
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform 180ms ease',
+            p: 1.25,
+            border: `1px solid ${tones.primary.soft}`,
+            background: `linear-gradient(135deg, ${tones.primary.soft} 0%, ${palette.surface} 100%)`,
           }}
         >
-          <ExpandMoreRoundedIcon fontSize="small" />
-        </IconButton>
-      </Stack>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  backgroundColor: tones.primary.soft,
+                  color: tones.primary.main,
+                }}
+              >
+                <SmartToyRoundedIcon fontSize="small" />
+              </Box>
+              <Typography sx={{ fontSize: 13.5, fontWeight: 800 }}>{title}</Typography>
+            </Stack>
 
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <Stack sx={{ pt: 1.5 }}>
+            <IconButton
+              size="small"
+              onClick={() => setOpen(false)}
+              aria-label="סגירת העוזר"
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                bgcolor: palette.surface,
+                border: `1px solid ${palette.border}`,
+              }}
+            >
+              <ExpandMoreRoundedIcon fontSize="small" sx={{ transform: 'rotate(180deg)' }} />
+            </IconButton>
+          </Stack>
+
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Stack sx={{ pt: 1.5 }}>
           <Stack direction="row" gap={1} sx={{ flexWrap: 'wrap', mb: 1.25 }}>
             {prompts.slice(0, 4).map((prompt) => (
               <Chip
@@ -173,8 +178,38 @@ export function QuickInsightChat({
               {lastAnswer}
             </Typography>
           )}
-        </Stack>
-      </Collapse>
-    </Card>
+              <Typography sx={{ fontSize: 10.5, color: palette.textSecondary, mt: 1 }}>
+                note: ML capabilities in progress
+              </Typography>
+            </Stack>
+          </Collapse>
+        </Card>
+      ) : (
+        <IconButton
+          onClick={() => setOpen(true)}
+          aria-label="פתיחת העוזר"
+          title={title}
+          sx={{
+            width: 38,
+            height: 38,
+            bgcolor: tones.primary.soft,
+            color: tones.primary.main,
+            border: `1px solid ${tones.primary.soft}`,
+            boxShadow: '0 3px 10px rgba(15, 30, 50, 0.12)',
+            animation: 'quietPulse 3s ease-in-out infinite',
+            '&:hover': {
+              bgcolor: palette.surface,
+              color: tones.primary.main,
+            },
+            '@keyframes quietPulse': {
+              '0%, 100%': { opacity: 0.78, transform: 'scale(1)' },
+              '50%': { opacity: 1, transform: 'scale(1.06)' },
+            },
+          }}
+        >
+          <SmartToyRoundedIcon sx={{ fontSize: 19 }} />
+        </IconButton>
+      )}
+    </Box>
   );
 }
