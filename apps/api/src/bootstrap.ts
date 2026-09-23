@@ -78,7 +78,7 @@ export function configureApp(app: INestApplication): AppConfig {
 
   if (config.swaggerEnabled) {
     const documentConfig = new DocumentBuilder()
-      .setTitle('מערכת המעבר דרומה - API')
+      .setTitle('דרומה - API')
       .setDescription(
         'API לניהול אריזה, שינוע, קליטה ופיזור של ציוד בין בסיסים לקריית התקשוב. ' +
           'כל הנתונים במערכת הם נתוני דמה סינתטיים.',
@@ -103,7 +103,7 @@ export function configureApp(app: INestApplication): AppConfig {
     const document = SwaggerModule.createDocument(app, documentConfig);
     SwaggerModule.setup('api/docs', app, document, {
       swaggerOptions: { persistAuthorization: true },
-      customSiteTitle: 'המעבר דרומה - API',
+      customSiteTitle: 'דרומה - API',
     });
   }
 

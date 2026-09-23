@@ -2,7 +2,7 @@
   "name": "south-operation",
   "version": "1.0.0",
   "private": true,
-  "description": "מערכת המעבר דרומה - ניהול אריזה, שינוע וקליטה של ציוד",
+  "description": "דרומה - דיגיטציה, ריכוז וניהול מעבר הציוד",
   "workspaces": [
     "packages/*",
     "apps/*"

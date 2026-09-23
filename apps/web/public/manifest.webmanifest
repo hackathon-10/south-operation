@@ -1,7 +1,7 @@
 {
-  "name": "המעבר דרומה",
-  "short_name": "מעבר דרומה",
-  "description": "ניהול אריזה, שינוע וקליטה של ציוד",
+  "name": "דרומה",
+  "short_name": "דרומה",
+  "description": "דיגיטציה, ריכוז וניהול מעבר הציוד",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F2F5F9",

@@ -1,6 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0B1A2E"/>
-  <path d="M16 24h32v20a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V24Z" fill="#2F6FED"/>
-  <path d="M14 18h36l-4 6H18l-4-6Z" fill="#4C8DFF"/>
-  <path d="M26 32h12v4H26z" fill="#0B1A2E"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="דרומה">
+  <!-- סמל דרומה: סיכת מיקום מעל דיונה, עם ארגז ציוד. הצבעים לקוחים מהלוגו. -->
+  <rect width="64" height="64" rx="14" fill="#001848"/>
+  <!-- דיונת חול -->
+  <path d="M0 50c10-6 18 2 28 0s16-8 26-3-6 17-6 17H2Z" fill="#D8A860"/>
+  <!-- ארגז הציוד -->
+  <path d="M12 34.5 22 30l10 4.5v11L22 50l-10-4.5Z" fill="#FFFFFF"/>
+  <path d="M12 34.5 22 39l10-4.5L22 30Z" fill="#E2E8F0"/>
+  <path d="M22 39v11l10-4.5v-11Z" fill="#C7D2DE"/>
+  <!-- סיכת מיקום -->
+  <path d="M45 47c-8-11-11-15-11-19a11 11 0 1 1 22 0c0 4-3 8-11 19Z" fill="#007890"/>
+  <circle cx="45" cy="27.5" r="4.6" fill="#001848"/>
 </svg>

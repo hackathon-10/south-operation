@@ -111,25 +111,18 @@ export function LoginPage() {
         />
         <Stack direction="row" alignItems="center" gap={1.5} sx={{ position: 'relative' }}>
           <Box
-            sx={{
-              width: 46,
-              height: 46,
-              borderRadius: radii.control,
-              display: 'grid',
-              placeItems: 'center',
-              backgroundColor: 'rgba(255,255,255,.12)',
-              border: '1px solid rgba(255,255,255,.18)',
-              flexShrink: 0,
-            }}
-          >
-            <ShieldRoundedIcon sx={{ fontSize: 25 }} />
-          </Box>
+            component="img"
+            src="/favicon.svg"
+            alt=""
+            aria-hidden="true"
+            sx={{ width: 46, height: 46, borderRadius: radii.control, flexShrink: 0 }}
+          />
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 22, fontWeight: 800, lineHeight: 1.15 }}>
-              המעבר דרומה
+              דרומה
             </Typography>
             <Typography sx={{ fontSize: 12.5, opacity: 0.75 }}>
-              ניהול אריזה, שינוע וקליטה
+              דיגיטציה, ריכוז וניהול מעבר הציוד
             </Typography>
           </Box>
         </Stack>
@@ -196,9 +189,17 @@ export function LoginPage() {
           </Typography>
         </Stack>
 
-        <Typography sx={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15, position: 'relative' }}>
-          המעבר דרומה
-        </Typography>
+        {/*
+          כאן יש מקום ללוגו המלא, ולכן מוצגת גרסת ה-Knockout (אותה יצירה, בלבן)
+          ולא הגרסה הכהה: רקע הפאנל כהה, ולוגו כהה עליו אינו נראה.
+          התמונה נושאת את שם המערכת, ולכן ה-alt הוא השם עצמו.
+        */}
+        <Box
+          component="img"
+          src="/logo-light.png"
+          alt="דרומה"
+          sx={{ width: '100%', maxWidth: 420, height: 'auto', position: 'relative', mt: 1 }}
+        />
         <Typography sx={{ fontSize: 17, opacity: 0.85, maxWidth: 440, position: 'relative' }}>
           מקבלים משימה, אורזים, סוגרים אריזה עם QR — ובקריית התקשוב סורקים ויודעים בדיוק
           לאיזה חדר להביא. תמונת מצב מלאה למפקד, בזמן אמת.

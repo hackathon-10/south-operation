@@ -54,9 +54,13 @@ export function PackageLabelPage() {
 
       <Card id="print-area" sx={{ p: 3, maxWidth: 560, mx: 'auto' }}>
         <Stack alignItems="center" gap={1}>
-          <Typography sx={{ fontSize: 13, color: palette.textSecondary, letterSpacing: 2 }}>
-            המעבר דרומה
-          </Typography>
+          {/* המדבקה מודפסת על רקע לבן, ולכן כאן מוצגת הגרסה הכהה של הלוגו. */}
+          <Box
+            component="img"
+            src="/logo-dark.png"
+            alt="דרומה"
+            sx={{ width: 150, height: 'auto' }}
+          />
           <Typography
             sx={{ fontSize: 40, fontWeight: 800, letterSpacing: 1 }}
             dir="ltr"

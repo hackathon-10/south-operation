@@ -63,27 +63,25 @@ export function AppShell() {
         }}
       >
         <Stack direction="row" alignItems="center" gap={1.5}>
+          {/*
+            בסרגל העליון מוצג הסמל בלבד ולא הלוגו המלא: הלוגו הוא נעילה רחבה
+            (יחס 2.4:1) שכוללת את שורת התיאור, ובגובה של 36 פיקסלים אותה שורה
+            הופכת לטשטוש. הסמל חד בכל גודל, והשם והתיאור נשארים טקסט - קריא,
+            ניתן לבחירה ונגיש לקורא מסך.
+          */}
           <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              display: 'grid',
-              placeItems: 'center',
-              backgroundColor: 'rgba(255,255,255,.08)',
-              fontWeight: 800,
-              fontSize: 14,
-            }}
+            component="img"
+            src="/favicon.svg"
+            alt=""
             aria-hidden="true"
-          >
-            מד
-          </Box>
+            sx={{ width: 36, height: 36, borderRadius: 2, flexShrink: 0 }}
+          />
           <Box>
             <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.1 }}>
-              המעבר דרומה
+              דרומה
             </Typography>
             <Typography sx={{ fontSize: 11.5, opacity: 0.7 }}>
-              ניהול אריזה, שינוע וקליטה
+              דיגיטציה, ריכוז וניהול מעבר הציוד
             </Typography>
           </Box>
         </Stack>

@@ -42,7 +42,7 @@ export function CommanderDashboard() {
     <Box>
       <GreetingHero
         name={user?.fullName ?? ''}
-        subtitle="תמונת מצב מלאה של מבצע המעבר דרומה"
+        subtitle="תמונת מצב מלאה של מבצע דרומה"
         tiles={
           <>
             <StatCard
