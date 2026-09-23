@@ -24,6 +24,16 @@ export function configureApp(app: INestApplication): AppConfig {
 
   app.setGlobalPrefix(API_PREFIX);
 
+  // NoCyberHere: RATE_LIMITING
+  // Threat: הגבלת הקצב מזהה את כל המשתמשים כלקוח אחד ולכן חוסמת משתמשים תמימים,
+  //         או לחלופין נעקפת על ידי כותרת X-Forwarded-For מזויפת.
+  // Reason: מאחורי ה-Proxy של Vercel, req.ip הוא הכתובת הפנימית של ה-Proxy - זהה
+  //         לכל המשתמשים, כך שכולם חולקים אותה מכסה (10 התחברויות ל-15 דקות
+  //         *לכל המערכת*). 'trust proxy' = 1 גורם ל-Express לגזור את כתובת הלקוח
+  //         מה-hop האחרון בלבד; אסור להשתמש ב-true, שמאפשר ללקוח לזייף את הכתובת
+  //         ולעקוף את הגבלת הקצב.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // NoCyberHere: HTTP_SECURITY_HEADERS
   // Threat: התקפות מבוססות דפדפן (Clickjacking, MIME sniffing, דליפת Referrer)
   // Reason: Helmet מגדיר כותרות אבטחה. CSP מוגדר במפורש, בלי להסתמך על ברירת המחדל.

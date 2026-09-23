@@ -78,7 +78,10 @@ export function FilterBar({ search, filters = [], onReset, view }: FilterBarProp
             value={filter.value}
             onChange={(event) => filter.onChange(event.target.value)}
             sx={{
-              minWidth: 160,
+              // במובייל שני סינונים בשורה במקום גלישה לא אחידה; מ-sm ומעלה
+              // הרוחב נקבע לפי התוכן כמו קודם.
+              flex: { xs: '1 1 calc(50% - 4px)', sm: '0 0 auto' },
+              minWidth: { xs: 0, sm: 160 },
               '& .MuiOutlinedInput-root': { borderRadius: radii.pill },
             }}
           >
@@ -95,6 +98,7 @@ export function FilterBar({ search, filters = [], onReset, view }: FilterBarProp
             onClick={onReset}
             startIcon={<RestartAltRoundedIcon />}
             sx={{
+              flex: { xs: '1 1 100%', sm: '0 0 auto' },
               borderRadius: radii.pill,
               backgroundColor: palette.surface,
               border: `1px solid ${palette.border}`,

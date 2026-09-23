@@ -19,7 +19,13 @@ import ComputerRoundedIcon from '@mui/icons-material/ComputerRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PACKAGE_TYPES, PACKAGE_TYPE_LABEL, UserRole } from '@south/shared';
-import { useCancelTask, useCreatePackage, useStartTask, useTask } from '../../api/queries';
+import {
+  useCancelTask,
+  useCreatePackage,
+  useResponsibleCandidates,
+  useStartTask,
+  useTask,
+} from '../../api/queries';
 import { useAuth } from '../../auth/AuthContext';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { PageHeader } from '../../components/ui/PageHeader';
@@ -40,8 +46,12 @@ export function TaskDetailPage() {
   const startTask = useStartTask();
   const cancelTask = useCancelTask();
   const createPackage = useCreatePackage();
+  const { data: candidates } = useResponsibleCandidates(taskId);
 
   const [packageType, setPackageType] = useState<string>('PROFESSIONAL_BOX');
+  // האחראי על האריזה. ברירת המחדל היא המשתמש שפותח אותה, אבל אפשר להעביר
+  // את האחריות לאדם אחר - למשל ראש הצוות שהציוד שייך אליו.
+  const [responsibleUserId, setResponsibleUserId] = useState<string>('');
   const [cancelOpen, setCancelOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -51,6 +61,12 @@ export function TaskDetailPage() {
   const isCommander = user?.role === UserRole.LOGISTICS_COMMANDER;
   const isAssignedSoldier = user?.id === task.assignedSoldierId;
   const canPack = isAssignedSoldier && task.status !== 'COMPLETED' && task.status !== 'CANCELLED';
+
+  const responsibleOptions = candidates ?? [];
+  // ברירת המחדל היא המשתמש המחובר, כל עוד לא נבחר אחר במפורש.
+  const selectedResponsibleId =
+    responsibleUserId ||
+    (responsibleOptions.some((option) => option.id === user?.id) ? (user?.id ?? '') : '');
 
   const runAction = async (action: () => Promise<unknown>) => {
     setActionError(null);
@@ -231,14 +247,18 @@ export function TaskDetailPage() {
           </Typography>
 
           {canPack && (
-            <Stack direction="row" gap={1}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              gap={1}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               <TextField
                 select
                 size="small"
                 label="סוג אריזה"
                 value={packageType}
                 onChange={(event) => setPackageType(event.target.value)}
-                sx={{ minWidth: 150 }}
+                sx={{ minWidth: { xs: 0, sm: 150 } }}
               >
                 {PACKAGE_TYPES.map((type) => (
                   <MenuItem key={type} value={type}>
@@ -246,15 +266,30 @@ export function TaskDetailPage() {
                   </MenuItem>
                 ))}
               </TextField>
+              <TextField
+                select
+                size="small"
+                label="אחראי על האריזה"
+                value={selectedResponsibleId}
+                onChange={(event) => setResponsibleUserId(event.target.value)}
+                sx={{ minWidth: { xs: 0, sm: 190 } }}
+              >
+                {responsibleOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.fullName}
+                  </MenuItem>
+                ))}
+              </TextField>
               <Button
                 variant="contained"
                 startIcon={<AddBoxRoundedIcon />}
-                disabled={createPackage.isPending}
+                disabled={createPackage.isPending || !selectedResponsibleId}
                 onClick={() =>
                   runAction(async () => {
                     const created = await createPackage.mutateAsync({
                       taskId: task.id,
                       packageType,
+                      responsibleUserId: selectedResponsibleId,
                     });
                     navigate(`/packages/${created.id}`);
                   })

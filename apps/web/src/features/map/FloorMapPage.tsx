@@ -203,8 +203,17 @@ export function FloorMapPage() {
             )}
           </Stack>
 
-          <Box sx={{ overflowX: 'auto', pb: 1 }}>
-            <Box sx={{ width: `${zoom * 100}%`, minWidth: isDesktop ? 'auto' : 520 }}>
+          {/*
+            direction: ltr על מיכל הגלילה בלבד - ה-SVG ממוקם לפי קואורדינטות ולא
+            לפי כיוון טקסט, אבל בלי זה נקודת ההתחלה של הגלילה ב-RTL אינה עקבית
+            בין דפדפנים והמפה נפתחת כשהחדר הראשון חתוך.
+          */}
+          <Box sx={{ overflowX: 'auto', pb: 1, direction: 'ltr' }}>
+            {/*
+              במובייל המפה מתכווצת לרוחב המסך במקום להיחתך; מי שצריך לראות פרטים
+              משתמש בכפתורי הזום, ואז (ורק אז) נדרשת גלילה אופקית.
+            */}
+            <Box sx={{ width: `${zoom * 100}%` }}>
               <svg
                 viewBox={`0 0 ${floor.map.canvasWidth} ${floor.map.canvasHeight}`}
                 width="100%"

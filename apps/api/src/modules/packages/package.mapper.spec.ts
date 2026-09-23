@@ -20,9 +20,11 @@ function row(status: PackageStatus): PackageDetailRow {
     receivedAt: null,
     deliveredAt: null,
     createdById: 'user-1',
+    responsibleUserId: 'user-2',
     createdAt: now,
     updatedAt: now,
     team: { id: 'team-1', name: 'צוות פיתוח א׳' },
+    responsibleUser: { id: 'user-2', fullName: 'סרן רועי לוי' },
     task: { id: 'task-1', taskNumber: 'TSK-00101', priority: 'HIGH', assignedSoldierId: 'sol-1' },
     sourceRoom: {
       id: 'room-source',

@@ -129,4 +129,24 @@ export class PackingTasksController {
   ) {
     return this.packages.createFromTask(user, taskId, body);
   }
+
+  /**
+   * NoCyberHere: AUTHORIZATION
+   * Threat: חשיפת רשימת המשתמשים המלאה לחייל, כדי לבחור אחראי לאריזה
+   * Reason: /users שמור למפקד בלבד. כאן מוחזרת רשימה מצומצמת ורלוונטית בלבד -
+   *         אנשי הצוות של המשימה והחייל המשובץ - ורק למי שרשאי לארוז במשימה.
+   *         השדות המוחזרים הם שם ותפקיד בלבד, בלי אימייל או מספר אישי.
+   */
+  @Get(':taskId/responsible-candidates')
+  @ApiParam({ name: 'taskId', description: 'מזהה המשימה' })
+  @ApiOperation({
+    summary: 'מועמדים לאחראי על אריזה',
+    description: 'אנשי הצוות של המשימה והחייל המשובץ, לבחירת האחראי בעת פתיחת אריזה.',
+  })
+  responsibleCandidates(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+  ) {
+    return this.packages.responsibleCandidates(user, taskId);
+  }
 }

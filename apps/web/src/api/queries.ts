@@ -194,6 +194,21 @@ export const useUsers = (params?: Params, enabled = true) =>
     staleTime: 300_000,
   });
 
+/**
+ * מועמדים לאחראי על אריזה - אנשי הצוות של המשימה והחייל המשובץ.
+ * נפרד מ-useUsers, שנגיש למפקד בלבד.
+ */
+export const useResponsibleCandidates = (taskId: string | undefined) =>
+  useQuery({
+    queryKey: ['responsible-candidates', taskId] as const,
+    queryFn: () =>
+      get<Array<{ id: string; fullName: string; role: string }>>(
+        `/packing-tasks/${taskId}/responsible-candidates`,
+      ),
+    enabled: Boolean(taskId),
+    staleTime: 300_000,
+  });
+
 export const useCatalogItems = (params?: Params) =>
   useQuery({
     queryKey: queryKeys.catalog(params),
@@ -281,8 +296,15 @@ export const useScanPackage = (publicToken?: string) =>
 export const useCreatePackage = () => {
   const invalidate = useInvalidateOperational();
   return useMutation({
-    mutationFn: ({ taskId, packageType }: { taskId: string; packageType: string }) =>
-      post<PackageDto>(`/packing-tasks/${taskId}/packages`, { packageType }),
+    mutationFn: ({
+      taskId,
+      packageType,
+      responsibleUserId,
+    }: {
+      taskId: string;
+      packageType: string;
+      responsibleUserId: string;
+    }) => post<PackageDto>(`/packing-tasks/${taskId}/packages`, { packageType, responsibleUserId }),
     onSuccess: invalidate,
   });
 };

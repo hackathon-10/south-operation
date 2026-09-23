@@ -155,6 +155,7 @@ model User {
   createdTasks        PackingTask[]         @relation("TaskCreatedBy")
   assignedTasks       PackingTask[]         @relation("TaskAssignedSoldier")
   createdPackages     Package[]             @relation("PackageCreatedBy")
+  responsiblePackages Package[]             @relation("PackageResponsible")
   packageEvents       PackageStatusEvent[]
   createdMissions     TransportMission[]    @relation("MissionCreatedBy")
   assignedMissions    TransportMission[]    @relation("MissionAssignedSoldier")
@@ -460,6 +461,9 @@ model Package {
   receivedAt        DateTime?
   deliveredAt       DateTime?
   createdById       String        @db.Uuid
+  /// האחראי על האריזה - נקבע על ידי החייל בעת פתיחת האריזה, ואינו בהכרח
+  /// מי שפתח אותה או החייל שמשובץ למשימה.
+  responsibleUserId String        @db.Uuid
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -468,6 +472,7 @@ model Package {
   destinationRoom Room                      @relation("PackageDestinationRoom", fields: [destinationRoomId], references: [id], onDelete: Restrict)
   team            Team                      @relation(fields: [teamId], references: [id], onDelete: Restrict)
   createdBy       User                      @relation("PackageCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  responsibleUser User                      @relation("PackageResponsible", fields: [responsibleUserId], references: [id], onDelete: Restrict)
   assets          PackageAsset[]
   bulkLines       PackageBulkLine[]
   statusEvents    PackageStatusEvent[]
@@ -479,6 +484,7 @@ model Package {
   @@index([destinationRoomId])
   @@index([packingTaskId])
   @@index([sourceRoomId, status])
+  @@index([responsibleUserId])
 }
 
 model PackageAsset {

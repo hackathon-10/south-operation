@@ -178,6 +178,8 @@ export async function runSeed(client: PrismaClient): Promise<void> {
   const soldierGdnId = userByEmail.get('soldier.gdn@south.demo')!;
   const soldierTzrId = userByEmail.get('soldier.tzr@south.demo')!;
   const soldierKtId = userByEmail.get('soldier.kt@south.demo')!;
+  const teamLeadDevId = userByEmail.get('teamlead.dev@south.demo')!;
+  const teamLeadLabId = userByEmail.get('teamlead.lab@south.demo')!;
 
   // ---------- קטלוג ----------
   console.log('יוצר קטלוג מוצרים...');
@@ -481,6 +483,8 @@ export async function runSeed(client: PrismaClient): Promise<void> {
     packageType: 'PROFESSIONAL_BOX' | 'PERSONAL_BOX' | 'PALLET' | 'CRATE' | 'BULK_CONTAINER';
     createdHoursAgo: number;
     actorId: string;
+    /** האחראי על האריזה. ברירת מחדל: מי שפתח אותה. */
+    responsibleUserId?: string;
   }) {
     packageSeq += 1;
     const sealed = spec.status !== 'OPEN';
@@ -496,6 +500,7 @@ export async function runSeed(client: PrismaClient): Promise<void> {
         packageType: spec.packageType,
         status: spec.status,
         createdById: spec.actorId,
+        responsibleUserId: spec.responsibleUserId ?? spec.actorId,
         createdAt: hoursAgo(spec.createdHoursAgo),
         sealedAt: sealed ? hoursAgo(spec.createdHoursAgo - 1) : null,
         departedAt: ['IN_TRANSIT', 'RECEIVED_AT_HUB', 'DELIVERED_TO_ROOM'].includes(spec.status)
@@ -705,6 +710,7 @@ export async function runSeed(client: PrismaClient): Promise<void> {
     packageType: 'PROFESSIONAL_BOX',
     createdHoursAgo: 70,
     actorId: soldierGdnId,
+    responsibleUserId: teamLeadDevId,
   });
   const package2 = await createPackage({
     task: {
@@ -824,6 +830,7 @@ export async function runSeed(client: PrismaClient): Promise<void> {
     packageType: 'CRATE',
     createdHoursAgo: 24,
     actorId: soldierTzrId,
+    responsibleUserId: teamLeadLabId,
   });
 
   // --- משימה 5: מחסן גדעונים, אריזה מוכנה שממתינה לשיבוץ (בקשת הצטרפות) ---

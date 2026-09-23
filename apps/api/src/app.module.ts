@@ -26,9 +26,9 @@ import { UsersModule } from './modules/users/users.module';
      * Reason: מגבלה גלובלית, ומגבלות הדוקות יותר בנתיבי התחברות וסריקה.
      */
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 240 },
-      { name: 'auth', ttl: 900_000, limit: 10 },
-      { name: 'scan', ttl: 60_000, limit: 60 },
+      { name: 'default', ttl: 60_000, limit: 1200 },
+      { name: 'auth', ttl: 900_000, limit: 50 },
+      { name: 'scan', ttl: 60_000, limit: 120 },
     ]),
     PrismaModule,
     AuditModule,

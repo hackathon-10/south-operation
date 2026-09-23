@@ -200,6 +200,48 @@ export class PackagesService {
   // יצירה ועריכה
   // ============================================================
 
+  /**
+   * המועמדים לאחראי על אריזה במשימה: אנשי הצוות של המשימה והחייל המשובץ.
+   * רשימה מצומצמת ורלוונטית, במקום לפתוח את /users (שמור למפקד) לכל חייל.
+   */
+  async responsibleCandidates(
+    user: AuthenticatedUser,
+    taskId: string,
+  ): Promise<Array<{ id: string; fullName: string; role: string }>> {
+    const task = await this.prisma.packingTask.findUnique({
+      where: { id: taskId },
+      select: { teamId: true, assignedSoldierId: true },
+    });
+    if (!task) throw new AppException('TASK_NOT_FOUND');
+
+    if (!isCommander(user) && task.assignedSoldierId !== user.id) {
+      throw new AppException('FORBIDDEN_TASK_SCOPE');
+    }
+
+    const candidates = await this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        OR: [{ teamId: task.teamId }, { id: task.assignedSoldierId }],
+      },
+      select: { id: true, fullName: true, role: true },
+      orderBy: { fullName: 'asc' },
+    });
+
+    return candidates;
+  }
+
+  /**
+   * האחראי חייב להיות משתמש קיים ופעיל. בלי הבדיקה הזו מזהה שגוי היה נכשל רק
+   * ברמת המפתח הזר, עם שגיאת מסד גנרית במקום הודעה ברורה למשתמש.
+   */
+  private async assertResponsibleUserExists(responsibleUserId: string): Promise<void> {
+    const responsible = await this.prisma.user.findUnique({
+      where: { id: responsibleUserId },
+      select: { isActive: true },
+    });
+    if (!responsible || !responsible.isActive) throw new AppException('USER_NOT_FOUND');
+  }
+
   async createFromTask(
     user: AuthenticatedUser,
     taskId: string,
@@ -221,6 +263,8 @@ export class PackagesService {
       throw new AppException('TASK_INVALID_STATUS');
     }
 
+    await this.assertResponsibleUserExists(input.responsibleUserId);
+
     const packageId = await this.prisma.$transaction(async (tx) => {
       await this.tasks.markInProgress(tx, taskId, user.id);
 
@@ -236,6 +280,7 @@ export class PackagesService {
           notes: input.notes ?? null,
           status: PackageStatus.OPEN,
           createdById: user.id,
+          responsibleUserId: input.responsibleUserId,
         },
       });
 
@@ -274,11 +319,16 @@ export class PackagesService {
     const row = await this.loadPackage(packageId);
     this.assertEditable(user, row);
 
+    if (input.responsibleUserId) {
+      await this.assertResponsibleUserExists(input.responsibleUserId);
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.package.update({
         where: { id: packageId },
         data: {
           packageType: input.packageType,
+          responsibleUserId: input.responsibleUserId,
           notes: input.notes === null ? null : input.notes,
         },
       });
@@ -288,7 +338,11 @@ export class PackagesService {
           action: AuditAction.PACKAGE_UPDATED,
           entityType: 'Package',
           entityId: packageId,
-          before: { packageType: row.packageType, notes: row.notes },
+          before: {
+            packageType: row.packageType,
+            notes: row.notes,
+            responsibleUserId: row.responsibleUserId,
+          },
           after: input,
         },
         tx,

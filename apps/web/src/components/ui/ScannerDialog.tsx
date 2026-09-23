@@ -40,29 +40,48 @@ export function extractTokenFromScan(text: string): string | null {
  * הרשאת מצלמה מתבקשת רק בזמן הסריקה עצמה, ולא בעליית האפליקציה.
  */
 export function ScannerDialog({ open, title = 'סריקת אריזה', onClose, onResult }: ScannerDialogProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // אלמנט הווידאו נשמר ב-state ולא ב-ref, כדי שה-effect ירוץ בדיוק כשהוא נכנס
+  // ל-DOM. עם ref רגיל הוא עלול להיות null בהרצה הראשונה, והמצלמה לא תיפתח כלל.
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [manualValue, setManualValue] = useState('');
 
+  /**
+   * ה-callback נשמר ב-ref ולא נכנס לרשימת התלויות של ה-effect.
+   * אחרת כל רינדור מחדש של ההורה (שמעביר פונקציה חדשה) היה מפרק ומקים מחדש את
+   * המצלמה באמצע הסריקה - המצלמה נדלקת, מיד נכבית, ושום דבר לא נסרק.
+   */
+  const onResultRef = useRef(onResult);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+
   useEffect(() => {
     if (!open || manualMode) return;
+
+    // בלי אלמנט וידאו אמיתי zxing יוצר אלמנט מנותק משלו: ההרשאה מתקבלת,
+    // המצלמה נדלקת, אבל אין תצוגה ואי אפשר לכוון אותה ל-QR.
+    const video = videoEl;
+    if (!video) return;
 
     let cancelled = false;
     const reader = new BrowserQRCodeReader();
 
     (async () => {
       try {
-        const controls = await reader.decodeFromVideoDevice(
-          undefined,
-          videoRef.current ?? undefined,
+        // ברירת המחדל של zxing היא המצלמה הראשונה ברשימה - בטלפון בדרך כלל
+        // המצלמה הקדמית. לסריקת מדבקה צריך את המצלמה האחורית.
+        const controls = await reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: 'environment' } } },
+          video,
           (result) => {
             if (!result || cancelled) return;
             const token = extractTokenFromScan(result.getText());
             if (token) {
               controls.stop();
-              onResult({ token });
+              onResultRef.current({ token });
             }
           },
         );
@@ -83,8 +102,13 @@ export function ScannerDialog({ open, title = 'סריקת אריזה', onClose, 
       cancelled = true;
       controlsRef.current?.stop();
       controlsRef.current = null;
+      // zxing אמור לשחרר את ה-Stream, אבל אם ההקמה נקטעה באמצע הוא לא תמיד מספיק -
+      // בלי זה נורית המצלמה נשארת דולקת אחרי סגירת החלון.
+      const stream = video.srcObject as MediaStream | null;
+      stream?.getTracks().forEach((track) => track.stop());
+      video.srcObject = null;
     };
-  }, [open, manualMode, onResult]);
+  }, [open, manualMode, videoEl]);
 
   useEffect(() => {
     if (!open) {
@@ -125,7 +149,7 @@ export function ScannerDialog({ open, title = 'סריקת אריזה', onClose, 
             }}
           >
             <video
-              ref={videoRef}
+              ref={setVideoEl}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               muted
               playsInline

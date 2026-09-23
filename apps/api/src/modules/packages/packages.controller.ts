@@ -72,7 +72,7 @@ export class PackagesController {
    * Threat: ניסיון לנחש Tokens של אריזות בסריקות חוזרות
    * Reason: הגבלת קצב על נתיב הסריקה, בנוסף ל-Token אקראי באורך 32 בתים.
    */
-  @Throttle({ scan: { limit: 60, ttl: 60_000 } })
+  @Throttle({ scan: { limit: 120, ttl: 60_000 } })
   @Get('scan/packages/:publicToken')
   @ApiParam({ name: 'publicToken', description: 'ה-Token מתוך ה-QR' })
   @ApiOperation({

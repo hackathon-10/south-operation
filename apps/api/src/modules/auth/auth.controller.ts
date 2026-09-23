@@ -24,7 +24,7 @@ export class AuthController {
    * Reason: הגבלת קצב הדוקה יותר מברירת המחדל בנתיב ההתחברות.
    */
   @Public()
-  @Throttle({ auth: { limit: 10, ttl: 900_000 } })
+  @Throttle({ auth: { limit: 50, ttl: 900_000 } })
   @Post('login')
   @HttpCode(200)
   @ApiOperation({
@@ -48,7 +48,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ auth: { limit: 60, ttl: 900_000 } })
+  @Throttle({ auth: { limit: 300, ttl: 900_000 } })
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({
