@@ -24,6 +24,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { palette, tones } from '../../theme/tokens';
 import { formatDateTime } from '../../utils/format';
 import { GreetingHero } from './GreetingHero';
+import { QuickInsightChat } from './QuickInsightChat';
 
 /**
  * מסך מפקד המבצע (§10.6) - תמונת מאקרו בלבד.
@@ -233,6 +234,15 @@ export function OperationDashboard() {
             />
           </>
         }
+      />
+
+      <QuickInsightChat
+        prompts={[
+          { label: 'מה המצב הכולל?', answer: `ההתקדמות הכוללת היא ${headline.overallProgressPercent}% עם ${headline.packagesDelivered}/${headline.packagesTotal} אריזות שהגיעו.` },
+          { label: 'כמה שליחויות בדרך?', answer: `בדרך כרגע ${headline.missionsInTransit} שליחויות.` },
+          { label: 'כמה בסיסים תקועים?', answer: `יש ${headline.basesAtRisk} בסיסים שמדורשים תשומת לב.` },
+          { label: 'מה צריך תשומת לב?', answer: data.bases.some((base) => base.health !== 'GREEN') ? 'יש כמה בסיסים או יחידות עם מצב לא תקין.' : 'המערכת נראית יציבה כרגע.' },
+        ]}
       />
 
       <Stack spacing={2} sx={{ mt: 3 }}>

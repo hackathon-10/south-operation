@@ -18,6 +18,7 @@ import { formatDateTime, formatMinutes, formatRelative } from '../../utils/forma
 import { labels, priorityTone } from '../../utils/status';
 import { HorizontalBarChart } from './charts';
 import { GreetingHero } from './GreetingHero';
+import { QuickInsightChat } from './QuickInsightChat';
 
 /** תמונת מצב מלאה למפקד הלוגיסטיקה (§10.3, §15). */
 export function CommanderDashboard() {
@@ -74,6 +75,15 @@ export function CommanderDashboard() {
             />
           </>
         }
+      />
+
+      <QuickInsightChat
+        prompts={[
+          { label: 'כמה משימות פתוחות?', answer: `כיום יש ${data.tasks.inProgress + data.tasks.assigned} משימות פתוחות.` },
+          { label: 'כמה אריזות בדרך?', answer: `בדרך כרגע ${data.packages.inTransit} אריזות.` },
+          { label: 'מה הסטטוס הכללי?', answer: `ההתקדמות הכוללת היא ${data.overallProgressPercent}% והציוד שנארז עומד על ${data.equipmentPackedPercent}%.` },
+          { label: 'כמה בקשות ממתינות?', answer: `יש ${data.pendingJoinRequests.length} בקשות הצטרפות ממתינות.` },
+        ]}
       />
 
       <Stack direction="row" gap={1.5} sx={{ mb: 3, flexWrap: 'wrap' }}>
