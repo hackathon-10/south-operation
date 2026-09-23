@@ -71,7 +71,7 @@ export function AppShell() {
           */}
           <Box
             component="img"
-            src="/favicon.svg"
+            src="/icon-192.png"
             alt=""
             aria-hidden="true"
             sx={{ width: 36, height: 36, borderRadius: 2, flexShrink: 0 }}
@@ -210,7 +210,10 @@ export function AppShell() {
             minWidth: 0,
             px: { xs: `${layout.gutterMobile}px`, md: `${layout.gutterDesktop}px` },
             py: { xs: 2, md: 3 },
-            pb: { xs: `${layout.bottomNavHeight + 24}px`, md: 3 },
+            pb: {
+              xs: `calc(${layout.bottomNavHeight + 24}px + env(safe-area-inset-bottom))`,
+              md: 3,
+            },
             maxWidth: layout.maxContentWidth,
             mx: 'auto',
             width: '100%',
@@ -229,7 +232,8 @@ export function AppShell() {
             position: 'fixed',
             bottom: 0,
             insetInline: 0,
-            height: layout.bottomNavHeight,
+            height: `calc(${layout.bottomNavHeight}px + env(safe-area-inset-bottom))`,
+            pb: 'env(safe-area-inset-bottom)',
             backgroundColor: palette.navy900,
             display: 'flex',
             alignItems: 'stretch',

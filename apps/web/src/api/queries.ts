@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AssetDto,
-  AuditLogDto,
   BaseDto,
   CatalogItemDto,
   CommanderDashboardDto,
@@ -86,7 +85,6 @@ export const queryKeys = {
   missions: (params?: Params) => ['missions', params] as const,
   mission: (id: string) => ['missions', id] as const,
   joinRequests: (params?: Params) => ['join-requests', params] as const,
-  auditLogs: (params?: Params) => ['audit-logs', params] as const,
 };
 
 /** רענון רחב אחרי פעולה שמשנה מצב עסקי. */
@@ -556,11 +554,3 @@ export const useReviewJoinRequest = (decision: 'approve' | 'reject') => {
     onSuccess: invalidate,
   });
 };
-
-// ==================== Audit ====================
-
-export const useAuditLogs = (params?: Params) =>
-  useQuery({
-    queryKey: queryKeys.auditLogs(params),
-    queryFn: () => get<PaginatedResult<AuditLogDto>>('/audit-logs', params),
-  });

@@ -7,7 +7,6 @@ import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
 import RuleFolderRoundedIcon from '@mui/icons-material/RuleFolderRounded';
-import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import { UserRole } from '@south/shared';
 
 export interface NavItem {
@@ -73,16 +72,10 @@ export const NAV_ITEMS: NavItem[] = [
     icon: MapRoundedIcon,
     roles: [UserRole.LOGISTICS_COMMANDER, UserRole.LOGISTICS_SOLDIER, UserRole.TEAM_LEAD],
   },
-  {
-    to: '/audit',
-    label: 'יומן פעולות',
-    icon: HistoryRoundedIcon,
-    roles: [UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER],
-  },
 ];
 
 /**
- * ניווט מפקד המבצע דק בכוונה: דשבורד, בקשות הצטרפות ויומן פעולות בלבד.
+ * ניווט מפקד המבצע דק בכוונה: דשבורד ובקשות הצטרפות בלבד.
  * אל האריזות והשליחויות הוא מגיע בקדיחה משורה אדומה בדשבורד, לא מפריט קבוע.
  */
 export function navItemsForRole(role: UserRole): NavItem[] {

@@ -19,7 +19,6 @@ import { JoinRequestsPage } from './features/missions/JoinRequestsPage';
 import { FloorMapPage } from './features/map/FloorMapPage';
 import { ScanPage } from './features/scan/ScanPage';
 import { ScanResultPage } from './features/scan/ScanResultPage';
-import { AuditPage } from './features/audit/AuditPage';
 import { NotFoundPage } from './features/shared/NotFoundPage';
 import { ForbiddenPage } from './features/shared/ForbiddenPage';
 
@@ -128,15 +127,6 @@ export function App() {
         <Route path="/map" element={<FloorMapPage />} />
         <Route path="/scan" element={<ScanPage />} />
         <Route path="/scan/package/:publicToken" element={<ScanResultPage />} />
-
-        <Route
-          path="/audit"
-          element={
-            <Protected roles={[UserRole.LOGISTICS_COMMANDER, UserRole.OPERATION_MANAGER]}>
-              <AuditPage />
-            </Protected>
-          }
-        />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
