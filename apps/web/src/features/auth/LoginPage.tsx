@@ -112,7 +112,7 @@ export function LoginPage() {
         <Stack direction="row" alignItems="center" gap={1.5} sx={{ position: 'relative' }}>
           <Box
             component="img"
-            src="/favicon.svg"
+            src="/icon-192.png"
             alt=""
             aria-hidden="true"
             sx={{ width: 46, height: 46, borderRadius: radii.control, flexShrink: 0 }}
