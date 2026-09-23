@@ -30,8 +30,38 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit(): Promise<void> {
-    await this.$connect();
-    this.logger.log('החיבור למסד הנתונים נוצר בהצלחה');
+    this.warnIfPoolingMisconfigured();
+
+    // חיבור יזום נכשל => app.init() נכשל => הפונקציה כולה קורסת ב-Vercel עם
+    // FUNCTION_INVOCATION_FAILED אטום, וכל בקשה אחריה נכשלת באותו אופן.
+    // Prisma מתחבר ממילא בעצלתיים בשאילתה הראשונה, ולכן עדיף להמשיך לעלות:
+    // כך /health מדווח "database: down" ושאר הבקשות מחזירות שגיאה מסודרת
+    // בעברית במקום קריסה שאי אפשר לאבחן.
+    try {
+      await this.$connect();
+      this.logger.log('החיבור למסד הנתונים נוצר בהצלחה');
+    } catch {
+      this.logger.error(
+        'החיבור הראשוני למסד הנתונים נכשל. השרת ממשיך לעלות וינסה להתחבר בשאילתה הבאה.',
+      );
+    }
+  }
+
+  /**
+   * ב-Serverless כל מופע פונקציה פותח Pool משלו. מול Session Pooler (פורט 5432)
+   * כל חיבור תופס חיבור Postgres ייעודי, והמכסה נגמרת:
+   * FATAL: (EMAXCONNSESSION) max clients reached in session mode.
+   * האזהרה הזו מצביעה על הסיבה במקום להשאיר שגיאת חיבור גנרית.
+   */
+  private warnIfPoolingMisconfigured(): void {
+    if (!process.env.VERCEL) return;
+    const url = process.env.DATABASE_URL ?? '';
+    if (url.includes('pgbouncer=true')) return;
+
+    this.logger.warn(
+      'DATABASE_URL אינו מוגדר ל-Transaction Pooler (pgbouncer=true&connection_limit=1). ' +
+        'ב-Serverless זה גורם לניצול כל חיבורי ה-Session Pooler ולכשל EMAXCONNSESSION.',
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
